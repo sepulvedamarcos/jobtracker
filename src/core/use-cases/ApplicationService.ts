@@ -11,4 +11,8 @@ export class ApplicationService {
       (a, b) => new Date(b.appliedAt).getTime() - new Date(a.appliedAt).getTime(),
     );
   }
+
+  async deleteApplication(link: string): Promise<void> {
+    await this.jobRepository.deleteApplication(link);
+  }
 }
