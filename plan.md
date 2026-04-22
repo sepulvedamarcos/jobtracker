@@ -255,5 +255,54 @@ Agregar comandos:
 
 ---
 
-## 14) Próximo paso inmediato sugerido
-Crear el esqueleto de infraestructura de plugins (archivos vacíos + interfaces + installer mínimo) para habilitar la primera instalación de `.scrapper` y validación de `metadata.json`.
+## 15) Refinamientos de hotkeys y UX
+
+### 15.1 Cambios de teclas
+
+- **F2** → **S**: Iniciar escaneo
+- **F3** → **P**: Abrir panel de plugins
+- **K**: Mantiene alternar modal de keywords
+- **A**: Nueva tecla para modal "Acerca de"
+
+### 15.2 Modal de Plugins (F3 → P)
+
+Flujo de instalación de plugin `.scrapper`:
+
+1. Usuario presiona **P**
+2. Se abre diálogo centrado que pide ruta del archivo `.scrapper`
+3. El usuario escribe o pega la ruta del archivo
+4. Al presionar **Enter**:
+   - Validar que el ZIP contiene exactamente 2 archivos:
+     - `metadata.json`
+     - `<nombre_sitio>.js` (ej: `linkedin.js`, `indeed.js`)
+   - Si no: mostrar error "El archivo no contiene lo que se espera"
+   - Si sí:
+     - Extraer `metadata.json` → `plugins/PluginsMetadata.json` (agregar al array)
+     - Crear carpeta `plugins/<nombre_sitio>/`
+     - Copiar `<nombre_sitio>.js` dentro de esa carpeta
+     - Mostrar mensaje de confirmación
+
+### 15.3 Modal "Acerca de" (A)
+
+Tecla: **A**
+
+Muestra información del autor y proyecto:
+
+```
+┌─────────────────────────────────────────┐
+│ Acerca de JobTracker                    │
+│                                         │
+│ Autor: Marcos Sepúlveda                  │
+│ Email: sepulvedamarcos@gmail.com          │
+│ Repo: https://github.com/sepulvedamarcos  │
+│         /jobtracker                     │
+│                                         │
+│ Presiona Esc para cerrar                │
+└─────────────────────────────────────────┘
+```
+
+---
+
+## 16) Ejecutable portable
+
+Ver documento `Build.md` para pasos de crear un ejecutable que funcione en cualquier SO via npm (estilo Claude Code, Gemini CLI).
