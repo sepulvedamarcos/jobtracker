@@ -37,15 +37,43 @@ The project already includes:
 
 ## Hotkeys
 
-According to the current TUI footer:
+Keyboard shortcuts available in the TUI:
 
-- **F2**: Scan
-- **F3**: Keywords
-- **F4**: Plugins
-- **Space**: Browser
-- **Enter**: Apply
-- **Del**: Delete
-- **Q**: Quit
+### Navigation
+- **Tab**: Switch between panels (Jobs → Detail → Applications)
+- **↑/↓**: Navigate between records
+- **PageUp/PageDown**: Paginate lists
+- **Esc**: Close dialogs/modals
+
+### Actions
+- **Enter** (jobs panel): Copy job to applications
+- **Enter** (applications panel): Open detail dialog
+- **Enter** (detail panel): Open link in browser
+- **Supr** (dialog): Delete selected application
+
+### Global functions
+- **F2**: Start scan
+- **F3**: Open keywords modal
+- **F4**: Open plugins panel
+- **K**: Toggle keywords modal (quick shortcut)
+- **Q**: Exit application
+
+## Screenshots
+
+### 1. Splash
+Startup screen showing version and loading status.
+
+![Splash](./images/image_1.png)
+
+### 2. Main Layout
+View of the layout with three panels and shortcuts footer.
+
+![Main Layout](./images/image_2.png)
+
+### 3. Detail Dialog
+Centered modal to view and delete an application.
+
+![Detail Modal](./images/image_3.png)
 
 ## Available commands
 
