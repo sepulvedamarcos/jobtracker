@@ -13,3 +13,14 @@ export const mapDomainJobToViewJob = (job: DomainJob): ViewJob => ({
     scannedAt: job.scannedAt,
     applicationLabel: '',
 });
+
+export const mapBackToJob = (viewJob: ViewJob): DomainJob => ({
+    id: viewJob.value,
+    keyword: viewJob.keyword,
+    title: viewJob.description,
+    company: viewJob.company,
+    date: viewJob.date,
+    link: viewJob.link,
+    source: viewJob.source,
+    scannedAt: viewJob.scannedAt,
+});
