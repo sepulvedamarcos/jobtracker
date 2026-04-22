@@ -417,12 +417,12 @@ export const MainLayout = ({ autoScan, jobService, applicationService }: MainLay
             return;
         }
 
-        if (isApplicationDetailModalOpen) {
+if (isApplicationDetailModalOpen) {
             if (key.escape) {
                 closeApplicationDetailModal();
                 return;
             }
-            if (normalizedInput === 'd') {
+            if (key.delete) {
                 void handleDeleteApplication();
                 return;
             }
@@ -485,15 +485,6 @@ export const MainLayout = ({ autoScan, jobService, applicationService }: MainLay
 
         if (key.return && activePanel === 'detail') {
             void handleOpenSelectedJob();
-            return;
-        }
-
-        if (key.return && activePanel === 'applications' && isApplicationDetailModalOpen) {
-            return;
-        }
-
-        if (normalizedInput === 'd' && activePanel === 'applications' && isApplicationDetailModalOpen) {
-            void handleDeleteApplication();
             return;
         }
 
