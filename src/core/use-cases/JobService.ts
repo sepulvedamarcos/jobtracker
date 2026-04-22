@@ -15,4 +15,8 @@ export class JobService {
       new Date(b.scannedAt).getTime() - new Date(a.scannedAt).getTime()
     );
   }
+
+  async applyToJob(job: Job, notes?: string): Promise<void> {
+    await this.jobRepository.applyToJob(job, notes);
+  }
 }

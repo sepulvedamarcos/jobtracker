@@ -7,11 +7,12 @@ import { DetailPanel } from './MainLayout/DetailPanel.js';
 import { Footer } from './MainLayout/Footer.js';
 import { JobService } from '../../../core/use-cases/JobService.js';
 import { ApplicationService } from '../../../core/use-cases/ApplicationService.js';
-import { mapDomainJobToViewJob } from './MainLayout/mapper.js';
-import { mapAppliedJobToViewApplication } from './MainLayout/application-mapper.js';
+import { mapDomainJobToViewJob, mapBackToJob } from './MainLayout/mapper.js';
+    import { mapAppliedJobToViewApplication } from './MainLayout/application-mapper.js';
 import { ViewJob } from './MainLayout/view-model.js';
 import { ViewApplication } from './MainLayout/application-view-model.js';
 import { KeywordsModal } from './MainLayout/KeywordsModal.js';
+import { ApplicationDetailModal } from './MainLayout/ApplicationDetailModal.js';
 import {
     buildApplicationListItemLabel,
     buildListItemLabel,
@@ -50,6 +51,8 @@ export const MainLayout = ({ autoScan, jobService, applicationService }: MainLay
     const [keywordsRevision, setKeywordsRevision] = useState(0);
     const [previousPanel, setPreviousPanel] = useState<PanelKey>('jobs');
     const [isAutoScanRunning, setIsAutoScanRunning] = useState(false);
+    const [isApplicationDetailModalOpen, setIsApplicationDetailModalOpen] = useState(false);
+    const [applicationModalRevision, setApplicationModalRevision] = useState(0);
 
     const { exit } = useApp();
     const { isRawModeSupported, setRawMode } = useStdin();
@@ -160,6 +163,8 @@ export const MainLayout = ({ autoScan, jobService, applicationService }: MainLay
     const keywordsModalWidth = Math.max(60, Math.floor(stdout.columns * 0.5));
     const keywordsModalHeight = Math.max(18, Math.floor(stdout.rows * 0.5));
     const keywordsModalListLimit = Math.max(4, keywordsModalHeight - 8);
+    const applicationDetailModalWidth = Math.max(60, Math.floor(stdout.columns * 0.5));
+    const applicationDetailModalHeight = Math.max(16, Math.floor(stdout.rows * 0.4));
     const panelContentWidth = Math.max(40, Math.floor(stdout.columns / 2) - 6);
     const jobsLabelWidth = Math.max(28, panelContentWidth - Math.max(2, String(jobsData.length).length) - 2);
     const applicationsLabelWidth = Math.max(
@@ -333,10 +338,94 @@ export const MainLayout = ({ autoScan, jobService, applicationService }: MainLay
         }
     };
 
+    const openApplicationDetailModal = () => {
+        if (!selectedApplication) {
+            setStatus('No hay postulación seleccionada.');
+            return;
+        }
+        setIsApplicationDetailModalOpen(true);
+        setStatus('Detalle de postulación...');
+    };
+
+    const closeApplicationDetailModal = () => {
+        setIsApplicationDetailModalOpen(false);
+        setStatus('Postulación cancelada.');
+    };
+
+    const handleDeleteApplication = async () => {
+        if (!selectedApplication) {
+            setStatus('No hay postulación para eliminar.');
+            return;
+        }
+
+        const linkToDelete = selectedApplication.link;
+        const titleToDelete = selectedApplication.title;
+
+        try {
+            await applicationService.deleteApplication(linkToDelete);
+            const updatedApplications = await applicationService.fetchAppliedJobs();
+            const mappedApplications = updatedApplications.map(mapAppliedJobToViewApplication);
+            const jobsWithApplicationBadge = markJobsAsApplied(jobsData, updatedApplications);
+
+            setJobsData(jobsWithApplicationBadge);
+            setApplicationsData(mappedApplications);
+            setIsApplicationDetailModalOpen(false);
+            setApplicationModalRevision((current) => current + 1);
+            setStatus(`Postulación eliminada: ${titleToDelete}`);
+        } catch {
+            setStatus('No se pudo eliminar la postulación.');
+        }
+    };
+
+    const handleApplySelectedJob = async () => {
+        if (!selectedJob) {
+            setStatus('No hay aviso seleccionado.');
+            return;
+        }
+
+        try {
+            const jobToApply = jobsData.find((job) => job.value === selectedJob.value);
+            if (jobToApply) {
+                const domainJob = {
+                    id: jobToApply.value,
+                    keyword: jobToApply.keyword,
+                    title: jobToApply.description,
+                    company: jobToApply.company,
+                    date: jobToApply.date,
+                    link: jobToApply.link,
+                    source: jobToApply.source,
+                    scannedAt: jobToApply.scannedAt,
+                };
+                await jobService.applyToJob(domainJob);
+                const updatedApplications = await applicationService.fetchAppliedJobs();
+                const mappedApplications = updatedApplications.map(mapAppliedJobToViewApplication);
+                const jobsWithApplicationBadge = markJobsAsApplied(jobsData, updatedApplications);
+
+                setJobsData(jobsWithApplicationBadge);
+                setApplicationsData(mappedApplications);
+                setStatus(`Postulado: ${jobToApply.description}`);
+            }
+        } catch {
+            setStatus('No se pudo crear la postulación.');
+        }
+    };
+
     useInput((input, key) => {
         const normalizedInput = input.toLowerCase();
         if (normalizedInput === 'q' || (key.ctrl && normalizedInput === 'c')) {
             exit();
+            return;
+        }
+
+        if (isApplicationDetailModalOpen) {
+            if (key.escape) {
+                closeApplicationDetailModal();
+                return;
+            }
+            if (normalizedInput === 'd') {
+                void handleDeleteApplication();
+                return;
+            }
             return;
         }
 
@@ -396,6 +485,25 @@ export const MainLayout = ({ autoScan, jobService, applicationService }: MainLay
 
         if (key.return && activePanel === 'detail') {
             void handleOpenSelectedJob();
+            return;
+        }
+
+        if (key.return && activePanel === 'applications' && isApplicationDetailModalOpen) {
+            return;
+        }
+
+        if (normalizedInput === 'd' && activePanel === 'applications' && isApplicationDetailModalOpen) {
+            void handleDeleteApplication();
+            return;
+        }
+
+        if (key.return && activePanel === 'applications' && !isApplicationDetailModalOpen) {
+            void openApplicationDetailModal();
+            return;
+        }
+
+        if (key.return && activePanel === 'jobs') {
+            void handleApplySelectedJob();
             return;
         }
 
@@ -478,6 +586,17 @@ export const MainLayout = ({ autoScan, jobService, applicationService }: MainLay
                     width={keywordsModalWidth}
                     height={keywordsModalHeight}
                     onSelectKeyword={setSelectedKeyword}
+                />
+            ) : null}
+
+            {isApplicationDetailModalOpen ? (
+                <ApplicationDetailModal
+                    application={selectedApplication}
+                    isActive
+                    width={applicationDetailModalWidth}
+                    height={applicationDetailModalHeight}
+                    onConfirmDelete={handleDeleteApplication}
+                    onCancel={closeApplicationDetailModal}
                 />
             ) : null}
 
