@@ -1,7 +1,22 @@
-import { IJobRepository } from '../domain/interfaces/IJobRepository.js';
-import { Job } from '../domain/models/Job.js';
+import { IJobRepository } from '../core/ports/IJobRepository.js';
+import { AppliedJob, Job } from '../core/entities/Job.js';
 
 export class InMemoryJobRepository implements IJobRepository {
+  saveScannedJobs(jobs: Job[]): Promise<void> {
+    throw new Error('Method not implemented.');
+  }
+  getLastScannedJobs(): Promise<Job[]> {
+    throw new Error('Method not implemented.');
+  }
+  applyToJob(job: Job, notes?: string): Promise<void> {
+    throw new Error('Method not implemented.');
+  }
+  getAppliedJobs(): Promise<AppliedJob[]> {
+    throw new Error('Method not implemented.');
+  }
+  deleteApplication(link: string): Promise<void> {
+    throw new Error('Method not implemented.');
+  }
   private items: Job[] = [];
 
   async findAll(): Promise<Job[]> {
