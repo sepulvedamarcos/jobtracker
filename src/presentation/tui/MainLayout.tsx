@@ -15,7 +15,6 @@ interface Job {
   salario?: string;
 }
 
-
 export const MainLayout = () => {
 
   const [jobsData, setJobsData] = useState<Job[]>([]);
@@ -28,7 +27,6 @@ export const MainLayout = () => {
   // Ejemplo de cómo se llenaría al escanear
   const handleScan = () => {
     setStatus('Escaneando...');
-    // Aquí llamarías a tu lógica de scraping
     const resultados: Job[] = [
       {
         label: 'Node.js Developer',

@@ -14,8 +14,6 @@ export const Splash = ({ onFinish }: Props) => {
   }, [onFinish]);
 
   return (
-    /* flexGrow={1} ocupa toda la terminal. 
-       Añadimos width="100%" para asegurar el eje horizontal */
     <Box 
         flexDirection="column" 
         alignItems="center" 
@@ -27,7 +25,6 @@ export const Splash = ({ onFinish }: Props) => {
         paddingBottom={2}
     >
         <Gradient name="summer"  >
-          {/* align="center" aquí centra el ASCII dentro de su propio bloque */}
           <BigText text="Job Tracker" font="chrome" />
         </Gradient>
         

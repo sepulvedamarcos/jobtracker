@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { render } from 'ink';
-import { Splash } from './components/Splash.js';
-import { MainLayout } from './components/MainLayout.js';
+import { Splash } from './presentation/tui/Splash.js';
+import { MainLayout } from './presentation/tui/MainLayout.js';
 
 const Root = () => {
   const [loading, setLoading] = useState(true);
