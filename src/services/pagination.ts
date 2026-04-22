@@ -18,6 +18,8 @@ export const paginateWithLabels = <T>(
     pageSize: number,
     getLabel: (item: T) => string,
     maxLabelLength = 66,
+    itemNoun = 'avisos',
+    getSuffix: (item: T) => string = () => '',
 ): PaginationResult<T> => {
     const totalItems = items.length;
     const totalPages = totalItems === 0 ? 0 : Math.ceil(totalItems / pageSize);
@@ -35,14 +37,14 @@ export const paginateWithLabels = <T>(
         return {
             ...item,
             lineNumber,
-            label: `${lineNumber}. ${safeLabel}`,
+            label: `${lineNumber}. ${safeLabel}${getSuffix(item)}`,
         };
     });
 
     const pageLabel =
         totalItems === 0
-            ? 'Pagina 0/0 | Mostrando 0 of 0 avisos'
-            : `Pagina ${currentPage + 1}/${totalPages} | Mostrando ${startIndex + 1}-${endIndex} of ${totalItems}`;
+            ? `Pagina 0/0 | Mostrando 0 de 0 ${itemNoun}`
+            : `Pagina ${currentPage + 1}/${totalPages} | Mostrando ${startIndex + 1}-${endIndex} de ${totalItems} ${itemNoun}`;
 
     return {
         items: pagedItems,

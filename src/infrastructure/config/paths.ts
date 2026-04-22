@@ -22,7 +22,7 @@ export const initializePaths = () => {
     
     return {
         jobs: path.join(paths.data, 'jobs.json'),
-        keywords: path.join(paths.config, 'keywords.json'),
+        keywords: path.join(paths.data, 'keywords.json'),
         applications: path.join(paths.data, 'applications.json'),
         plugins: pluginsPath
     };

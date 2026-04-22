@@ -2,13 +2,13 @@ import React from 'react';
 import { Box, Text } from 'ink';
 import SelectInput from 'ink-select-input';
 import type { PaginationResult } from '../../../../services/pagination.types.js';
-import { buildListHeader } from '../../../../services/list-labels.js';
-import { ViewJob } from './view-model.js';
+import { buildApplicationListHeader } from '../../../../services/list-labels.js';
+import { ViewApplication } from './application-view-model.js';
 import { getPanelFrameProps } from './panel-frame.js';
 
-interface JobListProps {
-  items: PaginationResult<ViewJob>['items'];
-  onHighlight: (item: ViewJob) => void;
+interface ApplicationListProps {
+  items: PaginationResult<ViewApplication>['items'];
+  onHighlight: (item: ViewApplication) => void;
   pageLabel: string;
   isActive: boolean;
   isFocused: boolean;
@@ -18,7 +18,7 @@ interface JobListProps {
   flexGrow?: number;
 }
 
-export const JobList = ({
+export const ApplicationList = ({
   items,
   onHighlight,
   pageLabel,
@@ -28,21 +28,21 @@ export const JobList = ({
   availableWidth,
   itemLimit,
   flexGrow,
-}: JobListProps) => (
+}: ApplicationListProps) => (
   <Box
     {...getPanelFrameProps({ isActive, accentColor })}
-    flexBasis="50%"
     flexDirection="column"
     paddingX={1}
     flexGrow={flexGrow}
   >
     <Text underline color={isActive ? accentColor : 'white'} wrap="truncate-end">
-      Avisos Capturados
+      Postulaciones
     </Text>
     <Text color={isActive ? accentColor : 'white'} dimColor wrap="truncate-end">
-      {buildListHeader({
+      {buildApplicationListHeader({
         sourceLabel: 'Fuente',
-        primaryLabel: 'Descripción',
+        appliedAtLabel: 'Fecha',
+        primaryLabel: 'Título',
         secondaryLabel: 'Empresa',
         availableWidth,
       })}
@@ -53,10 +53,10 @@ export const JobList = ({
           items={items}
           isFocused={isFocused}
           limit={itemLimit}
-          onHighlight={(item) => onHighlight(item as ViewJob)}
+          onHighlight={(item) => onHighlight(item as ViewApplication)}
         />
       ) : (
-        <Text color="gray">No hay avisos locales cargados.</Text>
+        <Text color="gray">No hay postulaciones guardadas.</Text>
       )}
     </Box>
     <Box justifyContent="flex-end" alignItems="flex-end">
