@@ -9,7 +9,7 @@ interface Props {
 
 export const Splash = ({ onFinish }: Props) => {
   useEffect(() => {
-    const timer = setTimeout(onFinish, 4000);
+    const timer = setTimeout(onFinish, 2000);
     return () => clearTimeout(timer);
   }, [onFinish]);
 

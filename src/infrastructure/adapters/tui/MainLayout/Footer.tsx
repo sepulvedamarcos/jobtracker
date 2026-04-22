@@ -1,38 +1,21 @@
 import React from 'react';
 import { Box, Text } from 'ink';
+import { ShortcutBar } from './ShortcutBar.js';
 
 export const Footer = () => {
   return (
     <Box backgroundColor="white" paddingX={1} width="100%">
-      <Box marginRight={2}>
-        <Text color="black" bold> F2</Text>
-        <Text color="black"> Scan</Text>
-      </Box>
-      <Box marginRight={2}>
-        <Text color="black" bold> F3</Text>
-        <Text color="black"> Keywords</Text>
-      </Box>
-      <Box marginRight={2}>
-        <Text color="black" bold> F4</Text>
-        <Text color="black"> Plugins</Text>
-      </Box>
-      <Box marginRight={2}>
-        <Text color="black" bold> PgUp/PgDn</Text>
-        <Text color="black"> Page</Text>
-      </Box>
-      <Box marginRight={2}>
-        <Text color="black" bold> Space</Text>
-        <Text color="black"> Browser</Text>
-      </Box>
-      <Box marginRight={2}>
-        <Text color="black" bold> Enter</Text>
-        <Text color="black"> Postular</Text>
-      </Box>
-      <Box marginRight={2}>
-        <Text color="black" bold> Del</Text>
-        <Text color="black"> Eliminar</Text>
-      </Box>
-      <Box flexGrow={1} justifyContent="flex-end">
+      <ShortcutBar
+        items={[
+          { keyLabel: 'F2', description: 'Scan' },
+          { keyLabel: 'K', description: 'Keywords' },
+          { keyLabel: 'F4', description: 'Plugins' },
+          { keyLabel: 'Tab', description: 'Panel' },
+          { keyLabel: 'PgUp/PgDn', description: 'Page' },
+          { keyLabel: 'Enter', description: 'Abrir' },
+        ]}
+      />
+      <Box flexGrow={1} paddingRight={1} justifyContent="flex-end">
         <Text color="black" bold> Q</Text>
         <Text color="black"> Salir</Text>
         <Text color="black"> / Ctrl+C</Text>

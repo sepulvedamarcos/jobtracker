@@ -8,4 +8,5 @@ export interface ViewJob {
     keyword: string;
     source: string;
     scannedAt: string;
+    applicationLabel: string;
 }

@@ -9,6 +9,10 @@ export interface Job {
   scannedAt: string; // ISO Date string
 }
 
+export interface JobWithApplication extends Job {
+  applicationLabel: string;
+}
+
 export enum ApplicationStatus {
   Interested = 0,
   Applied = 1,

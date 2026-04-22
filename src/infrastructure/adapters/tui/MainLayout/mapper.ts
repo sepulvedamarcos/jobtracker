@@ -11,4 +11,5 @@ export const mapDomainJobToViewJob = (job: DomainJob): ViewJob => ({
     keyword: job.keyword,
     source: job.source,
     scannedAt: job.scannedAt,
+    applicationLabel: '',
 });
