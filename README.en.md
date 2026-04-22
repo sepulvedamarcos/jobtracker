@@ -37,15 +37,42 @@ The project already includes:
 
 ## Hotkeys
 
-According to the current TUI footer:
+Keyboard shortcuts available in the TUI:
 
-- **F2**: Scan
-- **F3**: Keywords
-- **F4**: Plugins
-- **Space**: Browser
-- **Enter**: Apply
-- **Del**: Delete
-- **Q**: Quit
+### Navigation
+- **Tab**: Switch between panels (Jobs → Detail → Applications)
+- **↑/↓**: Navigate between records
+- **PageUp/PageDown**: Paginate lists
+- **Esc**: Close dialogs/modals
+
+### Actions
+- **Enter** (jobs panel): Copy job to applications
+- **Enter** (applications panel): Open detail dialog
+- **Enter** (detail panel): Open link in browser
+- **Supr** (dialog): Delete selected application
+
+### Global functions
+- **F2**: Start scan
+- **K**: Open keywords modal
+- **F4**: Open plugins panel
+- **Q**: Exit application
+
+## Screenshots
+
+### 1. Splash
+Startup screen showing version and loading status.
+
+![Splash](./images/image_1.png)
+
+### 2. Main Layout
+View of the layout with three panels and shortcuts footer.
+
+![Main Layout](./images/image_2.png)
+
+### 3. Detail Dialog
+Centered modal to add or delete an keywords.
+
+![Detail Modal](./images/image_3.png)
 
 ## Available commands
 
@@ -69,14 +96,6 @@ CLI options:
 - **CLI**: Commander
 - **System paths**: env-paths
 - **Persistence**: local JSON
-
-## Project structure
-
-- `src/core/` — entities, ports, and use cases.
-- `src/infrastructure/` — repositories, config, and adapters.
-- `src/infrastructure/adapters/cli/` — TUI entry point.
-- `src/infrastructure/adapters/tui/` — terminal UI components.
-- `src/services/` — shared utilities.
 
 ## Project vision
 

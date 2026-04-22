@@ -72,14 +72,14 @@ export const ApplicationDetailModal = ({
                     <ShortcutBar
                         items={[
                             { keyLabel: 'Esc', description: 'Cancelar' },
-                            { keyLabel: 'D', description: 'Eliminar' },
+                            { keyLabel: 'Supr', description: 'Eliminar' },
                         ]}
                     />
                 </Box>
 
                 <Box justifyContent="flex-end" marginTop={0}>
                     <Text color={isActive ? 'red' : 'gray'} italic>
-                        Presiona D para eliminar esta postulación.
+                        Presiona Supr para eliminar esta postulación.
                     </Text>
                 </Box>
             </Box>

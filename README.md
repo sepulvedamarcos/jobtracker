@@ -37,15 +37,42 @@ La base del proyecto ya incluye:
 
 ## Hotkeys
 
-Según el footer de la TUI actual:
+Atajos de teclado disponibles en la TUI:
 
-- **F2**: Scan
-- **F3**: Keywords
-- **F4**: Plugins
-- **Space**: Browser
-- **Enter**: Postular
-- **Del**: Eliminar
-- **Q**: Salir
+### Navegación
+- **Tab**: Cambiar entre paneles (Avisos → Detalle → Postulaciones)
+- **↑/↓**: Navegar entre registros
+- **PageUp/PageDown**: Paginar listas
+- **Esc**: Cerrar diálogos/modales
+
+### Acciones
+- **Enter** (panel avisos): Copiar aviso a postulaciones
+- **Enter** (panel postulaciones): Abrir diálogo de detalle
+- **Enter** (panel detalle): Abrir enlace en navegador
+- **Supr** (diálogo): Eliminar postulación seleccionada
+
+### Funciones globales
+- **F2**: Iniciar escaneo
+- **K**: Abrir modal de keywords
+- **F4**: Abrir panel de plugins
+- **Q**: Salir de la aplicación
+
+## Screenshots
+
+### 1. Splash
+Pantalla de arranque que muestra la versión y estado de carga.
+
+![Splash](./images/image_1.png)
+
+### 2. Entorno principal
+Vista del layout con los tres paneles y footer de atajos.
+
+![Main Layout](./images/image_2.png)
+
+### 3. Diálogo de detalle
+Modal centrado para agregar o eliminar palabras clave.
+
+![Detail Modal](./images/image_3.png)
 
 ## Comandos disponibles
 
@@ -69,14 +96,6 @@ Opciones CLI:
 - **CLI**: Commander
 - **Paths de sistema**: env-paths
 - **Persistencia**: JSON local
-
-## Estructura general
-
-- `src/core/` — entidades, puertos y casos de uso.
-- `src/infrastructure/` — repositorios, config y adaptadores.
-- `src/infrastructure/adapters/cli/` — punto de entrada de la TUI.
-- `src/infrastructure/adapters/tui/` — componentes visuales de consola.
-- `src/services/` — utilidades compartidas.
 
 ## Idea del proyecto
 
