@@ -53,9 +53,8 @@ Atajos de teclado disponibles en la TUI:
 
 ### Funciones globales
 - **F2**: Iniciar escaneo
-- **F3**: Abrir modal de keywords
+- **K**: Abrir modal de keywords
 - **F4**: Abrir panel de plugins
-- **K**: Alternar modal de keywords (atajo rápido)
 - **Q**: Salir de la aplicación
 
 ## Screenshots
@@ -71,7 +70,7 @@ Vista del layout con los tres paneles y footer de atajos.
 ![Main Layout](./images/image_2.png)
 
 ### 3. Diálogo de detalle
-Modal centrado para visualizar y eliminar una postulación.
+Modal centrado para agregar o eliminar palabras clave.
 
 ![Detail Modal](./images/image_3.png)
 
@@ -97,14 +96,6 @@ Opciones CLI:
 - **CLI**: Commander
 - **Paths de sistema**: env-paths
 - **Persistencia**: JSON local
-
-## Estructura general
-
-- `src/core/` — entidades, puertos y casos de uso.
-- `src/infrastructure/` — repositorios, config y adaptadores.
-- `src/infrastructure/adapters/cli/` — punto de entrada de la TUI.
-- `src/infrastructure/adapters/tui/` — componentes visuales de consola.
-- `src/services/` — utilidades compartidas.
 
 ## Idea del proyecto
 

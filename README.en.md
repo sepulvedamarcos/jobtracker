@@ -53,9 +53,8 @@ Keyboard shortcuts available in the TUI:
 
 ### Global functions
 - **F2**: Start scan
-- **F3**: Open keywords modal
+- **K**: Open keywords modal
 - **F4**: Open plugins panel
-- **K**: Toggle keywords modal (quick shortcut)
 - **Q**: Exit application
 
 ## Screenshots
@@ -71,7 +70,7 @@ View of the layout with three panels and shortcuts footer.
 ![Main Layout](./images/image_2.png)
 
 ### 3. Detail Dialog
-Centered modal to view and delete an application.
+Centered modal to add or delete an keywords.
 
 ![Detail Modal](./images/image_3.png)
 
@@ -97,14 +96,6 @@ CLI options:
 - **CLI**: Commander
 - **System paths**: env-paths
 - **Persistence**: local JSON
-
-## Project structure
-
-- `src/core/` — entities, ports, and use cases.
-- `src/infrastructure/` — repositories, config, and adapters.
-- `src/infrastructure/adapters/cli/` — TUI entry point.
-- `src/infrastructure/adapters/tui/` — terminal UI components.
-- `src/services/` — shared utilities.
 
 ## Project vision
 
