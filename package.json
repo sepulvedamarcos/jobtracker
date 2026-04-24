@@ -1,6 +1,6 @@
 {
   "name": "jobtracker",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "TUI para búsqueda y seguimiento de empleo",
   "main": "index.js",
   "scripts": {
