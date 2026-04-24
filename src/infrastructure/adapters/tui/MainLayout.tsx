@@ -376,6 +376,15 @@ export const MainLayout = ({ autoScan, jobService, applicationService }: MainLay
     const handleInstallPlugin = async () => {
         const rawPath = pluginPathDraft.trim();
         
+        // Log a archivo
+        const logFile = (msg: string) => {
+          const logPath = path.join(APP_PATHS.plugins, 'install.log');
+          const line = `[${new Date().toISOString()}] [MainLayout] ${msg}\n`;
+          fs.writeFileSync(logPath, line, { flag: 'a' });
+        };
+        
+        logFile('=== handleInstallPlugin INICIO ===');
+        
         if (!rawPath) {
             setPluginMessage('La ruta no puede estar vacía.');
             return;
@@ -422,8 +431,11 @@ export const MainLayout = ({ autoScan, jobService, applicationService }: MainLay
         
         try {
             setPluginMessage('Procesando...');
+            logFile('Path resolved: ' + finalPath);
             const pluginsDir = getPluginsDir();
+            logFile('pluginsDir: ' + pluginsDir);
             const tempDir = path.join(pluginsDir, '_temp_install');
+            logFile('tempDir: ' + tempDir);
 
             // Limpiar temp antes
             if (fs.existsSync(tempDir)) {
@@ -509,9 +521,11 @@ export const MainLayout = ({ autoScan, jobService, applicationService }: MainLay
             const metadataContent = fs.readFileSync(path.join(pluginBaseDir, metadataFileName), 'utf-8');
             let pluginData: { pluginId: string; name: string; pluginVersion: string; author?: string; mainFile?: string };
             pluginData = JSON.parse(metadataContent);
+            logFile('metadata parseado: ' + JSON.stringify(pluginData));
 
             if (!pluginData.pluginId || !pluginData.name || !pluginData.pluginVersion) {
                 setPluginMessage('metadata.json incompleto');
+                logFile('ERROR: metadata.json incompleto');
                 return;
             }
 
@@ -546,9 +560,11 @@ export const MainLayout = ({ autoScan, jobService, applicationService }: MainLay
             setPluginPathDraft('');
             setPluginMessage(`Plugin "${pluginData.name}" instalado.`);
             setStatus(`Plugin "${pluginData.name}" instalado.`);
+            logFile('INSTALADO OK: ' + pluginData.name);
         } catch (err) {
             const msg = err instanceof Error ? err.message : 'Error desconocido';
             setPluginMessage(`Error: ${msg}`);
+            logFile('ERROR: ' + msg);
         } finally {
             // Limpiar temp
             try {
