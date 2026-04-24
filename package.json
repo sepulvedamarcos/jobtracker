@@ -1,6 +1,6 @@
 {
   "name": "jobtracker",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "TUI para búsqueda y seguimiento de empleo",
   "main": "index.js",
   "scripts": {
@@ -20,7 +20,12 @@
     "release:patch": "standard-version --release-as patch",
     "prepare": "husky"
   },
-  "keywords": ["job", "tracker", "tui", "employment"],
+  "keywords": [
+    "job",
+    "tracker",
+    "tui",
+    "employment"
+  ],
   "author": "",
   "license": "ISC",
   "type": "module",
