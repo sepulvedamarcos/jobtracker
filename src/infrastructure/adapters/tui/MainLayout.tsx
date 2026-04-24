@@ -376,87 +376,86 @@ export const MainLayout = ({ autoScan, jobService, applicationService }: MainLay
     const handleInstallPlugin = async () => {
         const rawPath = pluginPathDraft.trim();
         
+        // Log a archivo
+        const logFile = (msg: string) => {
+          const logPath = path.join(APP_PATHS.plugins, 'install.log');
+          const line = `[${new Date().toISOString()}] [MainLayout] ${msg}\n`;
+          fs.writeFileSync(logPath, line, { flag: 'a' });
+        };
+        
+        logFile('=== handleInstallPlugin INICIO ===');
+        logFile('rawPath escrito por usuario: ' + rawPath);
+        
         if (!rawPath) {
             setPluginMessage('La ruta no puede estar vacía.');
             return;
         }
         
         // ===================== INSTALL PLUGIN =====================
-        const inputPath = path.resolve(rawPath);
-
-        // 1. Verificar si existe (case-insensitive buscar en cwd)
-        let finalPath = inputPath;
+        let inputPath = path.resolve(rawPath);
+        logFile('inputPath: ' + inputPath);
+        
+        // Si no existe, buscar case-insensitive en el directorio padre
         if (!fs.existsSync(inputPath)) {
-            const cwd = process.cwd();
-            const baseName = path.basename(inputPath).toLowerCase();
+            const dir = path.dirname(inputPath);
+            const base = path.basename(inputPath);
             
-            if (fs.existsSync(cwd)) {
-                const entries = fs.readdirSync(cwd);
-                let match = entries.find(e => e.toLowerCase() === baseName);
-                
-                if (!match) {
-                    for (const entry of entries) {
-                        const entryPath = path.join(cwd, entry);
-                        if (fs.statSync(entryPath).isDirectory()) {
-                            const subEntries = fs.readdirSync(entryPath);
-                            if (subEntries.some(e => e.toLowerCase() === baseName)) {
-                                match = entry;
-                                break;
-                            }
-                        }
-                    }
-                }
-                
+            if (fs.existsSync(dir)) {
+                const entries = fs.readdirSync(dir);
+                const match = entries.find(e => e.toLowerCase() === base.toLowerCase());
                 if (match) {
-                    finalPath = path.join(cwd, match);
+                    inputPath = path.join(dir, match);
+                    logFile('Case-insensitive match: ' + inputPath);
                 }
             }
         }
         
-        if (!fs.existsSync(finalPath)) {
+        // Si sigue sin existir, error
+        if (!fs.existsSync(inputPath)) {
             setPluginMessage('La ruta no existe');
+            logFile('ERROR: no existe: ' + inputPath);
             return;
         }
         
-        const isFile = fs.statSync(finalPath).isFile();
+        // Determinar si es archivo o directorio
+        if (fs.statSync(inputPath).isDirectory()) {
+            // Es directorio: buscar archivo .scrapper dentro
+            const files = fs.readdirSync(inputPath);
+            const scrapper = files.find(f => f.toLowerCase().endsWith('.scrapper'));
+            if (scrapper) {
+                logFile('Encontrado .scrapper en directorio: ' + scrapper);
+            } else {
+                setPluginMessage('No hay archivo .scrapper en la carpeta');
+                logFile('ERROR: no hay .scrapper en: ' + inputPath);
+                return;
+            }
+        }
         
+        // Verificar que es .scrapper
+        if (!inputPath.toLowerCase().endsWith('.scrapper')) {
+            setPluginMessage('El archivo debe ser .scrapper');
+            logFile('ERROR: no es .scrapper: ' + inputPath);
+            return;
+        }
+        
+        logFile('finalPath: ' + inputPath);
+        
+        // Usar el archivo directamente
+        const scrapperFile = inputPath;
+
         try {
             setPluginMessage('Procesando...');
+            logFile('Procesando: ' + scrapperFile);
+            
             const pluginsDir = getPluginsDir();
             const tempDir = path.join(pluginsDir, '_temp_install');
-
+            logFile('tempDir: ' + tempDir);
+            
             // Limpiar temp antes
             if (fs.existsSync(tempDir)) {
                 fs.rmSync(tempDir, { recursive: true, force: true });
             }
             fs.mkdirSync(tempDir, { recursive: true });
-
-            let scrapperFile: string | null = null;
-
-            if (isFile) {
-                if (!finalPath.toLowerCase().endsWith('.scrapper')) {
-                    setPluginMessage('El archivo debe tener extensión .scrapper');
-                    return;
-                }
-                scrapperFile = finalPath;
-            } else {
-                const files = fs.readdirSync(finalPath);
-                scrapperFile = files.find(f => f.toLowerCase().endsWith('.scrapper')) || null;
-                
-                if (scrapperFile) {
-                    scrapperFile = path.join(finalPath, scrapperFile);
-                } else {
-                    setPluginMessage('No se encontró archivo .scrapper en la carpeta');
-                    return;
-                }
-            }
-
-            if (!scrapperFile) {
-                setPluginMessage('No se encontró archivo .scrapper');
-                return;
-            }
-
-            setPluginMessage('Descomprimiendo...');
 
             // Usar JSZip
             const JSZip = (await import('jszip')).default;
@@ -480,8 +479,8 @@ export const MainLayout = ({ autoScan, jobService, applicationService }: MainLay
                 }
             });
             await Promise.all(promises);
-
-            // 4. Buscar estructura - puede haber subcarpeta o archivos sueltos
+            
+            // Buscar estructura - puede haber subcarpeta o archivos sueltos
             const tempFiles = fs.readdirSync(tempDir);
             
             // Buscar subcarpeta (el plugin puede estar dentro de una carpeta)
@@ -509,9 +508,11 @@ export const MainLayout = ({ autoScan, jobService, applicationService }: MainLay
             const metadataContent = fs.readFileSync(path.join(pluginBaseDir, metadataFileName), 'utf-8');
             let pluginData: { pluginId: string; name: string; pluginVersion: string; author?: string; mainFile?: string };
             pluginData = JSON.parse(metadataContent);
+            logFile('metadata parseado: ' + JSON.stringify(pluginData));
 
             if (!pluginData.pluginId || !pluginData.name || !pluginData.pluginVersion) {
                 setPluginMessage('metadata.json incompleto');
+                logFile('ERROR: metadata.json incompleto');
                 return;
             }
 
@@ -546,9 +547,11 @@ export const MainLayout = ({ autoScan, jobService, applicationService }: MainLay
             setPluginPathDraft('');
             setPluginMessage(`Plugin "${pluginData.name}" instalado.`);
             setStatus(`Plugin "${pluginData.name}" instalado.`);
+            logFile('INSTALADO OK: ' + pluginData.name);
         } catch (err) {
             const msg = err instanceof Error ? err.message : 'Error desconocido';
             setPluginMessage(`Error: ${msg}`);
+            logFile('ERROR: ' + msg);
         } finally {
             // Limpiar temp
             try {
