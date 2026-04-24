@@ -384,11 +384,16 @@ export const MainLayout = ({ autoScan, jobService, applicationService }: MainLay
         };
         
         logFile('=== handleInstallPlugin INICIO ===');
+        logFile('rawPath escrito por usuario: ' + rawPath);
         
         if (!rawPath) {
             setPluginMessage('La ruta no puede estar vacía.');
             return;
         }
+        
+        // ===================== INSTALL PLUGIN =====================
+        const inputPath = path.resolve(rawPath);
+        logFile('inputPath (resolve): ' + inputPath);
         
         // ===================== INSTALL PLUGIN =====================
         const inputPath = path.resolve(rawPath);
@@ -424,8 +429,11 @@ export const MainLayout = ({ autoScan, jobService, applicationService }: MainLay
         
         if (!fs.existsSync(finalPath)) {
             setPluginMessage('La ruta no existe');
+            logFile('ERROR: finalPath no existe: ' + finalPath);
             return;
         }
+        
+        logFile('finalPath final: ' + finalPath);
         
         const isFile = fs.statSync(finalPath).isFile();
         
