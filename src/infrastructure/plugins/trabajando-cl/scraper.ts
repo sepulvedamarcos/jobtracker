@@ -10,6 +10,54 @@ const generateId = () =>
 
 export const sourceName = 'trabajando.cl';
 
+/**
+ * Carga todos los resultados haciendo scroll y click en "Ver más"
+ */
+async function loadAllResults(page: any, onProgress?: (msg: string) => void): Promise<number> {
+  let prevCount = 0;
+  let iterations = 0;
+  const maxIterations = 10;
+  
+  // Scroll inicial
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await page.waitForTimeout(1000);
+  
+  while (iterations < maxIterations) {
+    // Intentar clickear "Ver más" via evaluate
+    const clicked = await page.evaluate(() => {
+      const buttons = Array.from(document.querySelectorAll('button'));
+      const verMas = buttons.find(b => b.textContent?.includes('Ver más'));
+      if (verMas) {
+        verMas.click();
+        return true;
+      }
+      return false;
+    });
+    
+    if (clicked) {
+      onProgress?.(`Cargando más resultados...`);
+      await page.waitForTimeout(2000);
+    }
+    
+    // Scroll después del click
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    await page.waitForTimeout(1000);
+    
+    const currentCount = await page.$$eval('a[href*="/trabajo/"]', links => links.length);
+    
+    // Si no cambió, terminamos
+    if (currentCount === prevCount && !clicked) {
+      break;
+    }
+    
+    onProgress?.(`Resultados: ${currentCount}`);
+    prevCount = currentCount;
+    iterations++;
+  }
+  
+  return prevCount;
+}
+
 async function scan(input: PluginScraperInput): Promise<Job[]> {
   const { keywords, onProgress } = input;
   const jobs: Job[] = [];
@@ -32,33 +80,49 @@ async function scan(input: PluginScraperInput): Promise<Job[]> {
       onProgress?.(`"${keyword}" (${i + 1}/${totalKeywords})`, progress);
 
       try {
-        const keywordEncoded = encodeURIComponent(keyword);
-        const searchUrl = `${BASE_URL}/trabajo-empleo/chile?q=${keywordEncoded}`;
+        // Normalizar keyword: lowercase y remover caracteres problemáticos
+        // trabajando.cl acepta:
+        // - palabras simples: python, javascript, angular
+        // - %20 para espacios: sql%20server, .net%20core
+        // NO acepta:
+        // - puntos solos: node.js (usar nodejs)
+        // - guiones solos: full-stack (usar fullstack)
+        const normalizedKeyword = keyword
+          .toLowerCase()
+          .trim()
+          // Reemplazar puntos seguidos de texto con texto sin punto
+          .replace(/\.js\b/gi, 'js')
+          .replace(/\.net\b/gi, 'net')
+          .replace(/\.ts\b/gi, 'ts')
+          .replace(/\.py\b/gi, 'py')
+          // Espacios se mantienen (se convertirán a %20)
         
-        await page.goto(searchUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+        // Usar URL con keyword en el PATH (funciona con %20 para espacios)
+        const searchUrl = `${BASE_URL}/trabajo-empleo/${encodeURIComponent(normalizedKeyword)}`;
         
-        // Esperar a que Nuxt renderice el contenido dinámico
-        await page.waitForTimeout(10000);
+        onProgress?.(`Navegando a ${searchUrl}...`, progress);
         
-        // Los empleos tienen links con patrón /trabajo/
-        const linkElements = await page.$$('a[href*="/trabajo/"]');
+        await page.goto(searchUrl, { waitUntil: 'networkidle', timeout: 60000 });
+        await page.waitForTimeout(3000);
         
-        for (const linkEl of linkElements) {
+        // Cargar todos los resultados (scroll + click "Ver más")
+        const totalLoaded = await loadAllResults(page, (msg) => onProgress?.(msg, progress));
+        onProgress?.(`Cargados ${totalLoaded} resultados`, progress);
+        
+        // Extraer todos los links
+        const jobLinks = await page.$$('a[href*="/trabajo/"]');
+        
+        for (const linkEl of jobLinks) {
           try {
             const href = await linkEl.evaluate(el => el.href);
-            const title = await linkEl.evaluate(el => el.textContent?.trim());
+            const titleText = await linkEl.evaluate(el => el.textContent?.trim());
             
-            if (href && title && href.includes('/trabajo/')) {
-              // Buscar la empresa cercana en el container
-              const parent = await linkEl.$('xpath=../..');
-              const companyEl = parent ? await parent.$('[class*="empresa"], [class*="company"]') : null;
-              const company = companyEl ? await companyEl.evaluate(el => el.textContent?.trim()) : null;
-              
+            if (href && titleText && href.includes('/trabajo/') && titleText.length > 3) {
               jobs.push({
                 id: generateId(),
                 keyword,
-                title,
-                company: company || 'Empresa no especificada',
+                title: titleText,
+                company: 'Empresa no especificada',
                 date: 'Hoy',
                 link: href,
                 source: sourceName,
@@ -66,11 +130,11 @@ async function scan(input: PluginScraperInput): Promise<Job[]> {
               });
             }
           } catch {
-            // Skip
+            // Skip jobs con errores de extracción
           }
         }
 
-        onProgress?.(`"${keyword}" - ${linkElements.length} empleos`, progress);
+        onProgress?.(`"${keyword}" - ${jobs.filter(j => j.keyword === keyword).length} empleos`, progress);
       } catch (err) {
         const msg = err instanceof Error ? err.message : 'Unknown error';
         onProgress?.(`Error: ${msg}`, progress);
@@ -81,8 +145,13 @@ async function scan(input: PluginScraperInput): Promise<Job[]> {
     await browser.close().catch(() => {});
   }
 
-  onProgress?.(`Listo: ${jobs.length} empleos`, 100);
-  return jobs;
+  // Eliminar duplicados
+  const uniqueJobs = jobs.filter((job, index, self) => 
+    index === self.findIndex(j => j.link === job.link)
+  );
+
+  onProgress?.(`Listo: ${uniqueJobs.length} empleos únicos`, 100);
+  return uniqueJobs;
 }
 
 const scraper: PluginScraper = {
