@@ -4,7 +4,7 @@ import { Job } from '../entities/Job.js';
 
 export class JobService {
   // Recibe cualquier objeto que cumpla con la interfaz IJobRepository
-  constructor(private jobRepository: IJobRepository) {}
+  constructor(public readonly jobRepository: IJobRepository) {}
 
   async fetchLastJobs(): Promise<Job[]> {
     // Aquí podrías agregar lógica de negocio (ej. filtrar por fecha)
@@ -18,5 +18,9 @@ export class JobService {
 
   async applyToJob(job: Job, notes?: string): Promise<void> {
     await this.jobRepository.applyToJob(job, notes);
+  }
+
+  async saveScannedJobs(jobs: Job[]): Promise<void> {
+    await this.jobRepository.saveScannedJobs(jobs);
   }
 }

@@ -10,6 +10,7 @@ import { JsonJobRepository } from '../../storage/JsonJobRepository.js';
 import { JobService } from '../../../core/use-cases/JobService.js';
 import { ApplicationService } from '../../../core/use-cases/ApplicationService.js';
 import { addKeyword, readKeywords, removeKeyword } from '../../../services/keywords.js';
+import { installPlugin } from '../../../core/use-cases/plugins/InstallPluginUseCase.js';
 
 const program = new Command();
 const jobRepository = new JsonJobRepository();
@@ -36,7 +37,7 @@ const Root = ({ autoScan, skipSplash }: { autoScan?: boolean; skipSplash?: boole
 
 // --- Configuración de Commander ---
 program
-  .name('jobtracker') // Así es como aparecerá en la ayuda (--help)
+  .name('jobtracker')
   .description('TUI para búsqueda de empleos')
   .version(getVersion())
   .option('-f, --find', 'Escanear de inmediato al iniciar y entrara a la vista principal')
@@ -44,10 +45,36 @@ program
   .option('--noSplash, --nosplash', 'Iniciar directamente en la vista principal sin mostrar el splash')
   .option('-a, --addKey <keyword>, --addkey <keyword>', 'Agregar una keyword y salir')
   .option('-d, --delKey <keyword>, --delkey <keyword>', 'Eliminar una keyword y salir')
+  .option('-p, --addPlugin <ruta>, --addplugin <ruta>', 'Instalar un plugin desde ruta .scrapper y salir')
+  .option('--delPlugin <pluginId>, --delplugin <pluginId>', 'Eliminar un plugin instalado y salir')
   .action(async (options) => {
     const addKey = options.addKey ?? options.addkey;
     const delKey = options.delKey ?? options.delkey;
+    const addPlugin = options.addPlugin ?? options.addplugin;
+    const delPlugin = options.delPlugin ?? options.delplugin;
     const noSplash = options.noSplash ?? options.nosplash;
+
+    // Eliminar plugin
+    if (delPlugin) {
+      console.log(`🗑️ Eliminando plugin: ${delPlugin}`);
+      // Acá se implementaría con InstallPluginUseCase o similar
+      console.log(`ℹ️ Función no implementada aún`);
+      process.exit(0);
+    }
+
+    // Instalar plugin
+    if (addPlugin) {
+      console.log(`📦 Instalando plugin: ${addPlugin}`);
+      const result = await installPlugin(addPlugin, (msg) => console.log(`  ${msg}`));
+      
+      if (result.success) {
+        console.log(`✅ ${result.message}`);
+      } else {
+        console.log(`❌ ${result.message}`);
+        process.exit(1);
+      }
+      process.exit(0);
+    }
 
     if (delKey) {
       const beforeKeywords = await readKeywords();

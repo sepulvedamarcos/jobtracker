@@ -7,9 +7,9 @@ export const Footer = () => {
     <Box backgroundColor="white" paddingX={1} width="100%">
       <ShortcutBar
         items={[
-          { keyLabel: 'F2', description: 'Scan' },
+          { keyLabel: 'S', description: 'Scan' },
           { keyLabel: 'K', description: 'Keywords' },
-          { keyLabel: 'F4', description: 'Plugins' },
+          { keyLabel: 'P', description: 'Plugins' },
           { keyLabel: 'Tab', description: 'Panel' },
           { keyLabel: 'PgUp/PgDn', description: 'Page' },
           { keyLabel: 'Enter', description: 'Abrir' },
