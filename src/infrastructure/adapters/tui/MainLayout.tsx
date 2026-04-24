@@ -395,9 +395,6 @@ export const MainLayout = ({ autoScan, jobService, applicationService }: MainLay
         const inputPath = path.resolve(rawPath);
         logFile('inputPath (resolve): ' + inputPath);
         
-        // ===================== INSTALL PLUGIN =====================
-        const inputPath = path.resolve(rawPath);
-
         // 1. Verificar si existe (case-insensitive buscar en cwd)
         let finalPath = inputPath;
         if (!fs.existsSync(inputPath)) {
