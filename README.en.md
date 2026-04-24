@@ -170,8 +170,21 @@ JobTracker is **extensible**. You can add plugins for different job boards.
 
 ### Available plugins
 
-- **trabajando.cl** - Chilean job portal with more than 15 sites
-- **computrabajo.cl** - Latin American portal (in development)
+Download plugins from [Releases](https://github.com/sepulvedamarcos/jobtracker/releases):
+
+| Plugin | Download |
+|--------|----------|
+| computrabajo.cl | [computrabajo-cl.scrapper](https://github.com/sepulvedamarcos/jobtracker/releases/latest/download/computrabajo-cl.scrapper) |
+| trabajando.cl | [trabajando-cl.scrapper](https://github.com/sepulvedamarcos/jobtracker/releases/latest/download/trabajando-cl.scrapper) |
+
+### Install plugins
+
+```bash
+# From project directory
+jobtracker --addPlugin ./path/to/plugin.scraper
+
+# Or move plugin folder to ~/.jobtracker/plugins/
+```
 
 ### Create your own plugin
 

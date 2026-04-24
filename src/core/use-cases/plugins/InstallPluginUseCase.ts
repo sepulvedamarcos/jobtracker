@@ -214,6 +214,7 @@ export const installPlugin = async (
       message: `Plugin ${pluginData.name} instalado correctamente`,
       plugin: finalMetadata,
     };
+    logInstall('FINALIZADO OK:', pluginData.name);
 
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Error desconocido';
