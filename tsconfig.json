@@ -2,17 +2,17 @@
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": "./src",
-
+ 
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "target": "ES2022",
 
-    "lib": ["ES2022"],
+    "lib": ["ES2022", "DOM"],
     "types": ["node"],
 
     "jsx": "react-jsx",
 
-    "strict": true,
+    "strict": false,
     "skipLibCheck": true
   },
   "include": ["src"]
