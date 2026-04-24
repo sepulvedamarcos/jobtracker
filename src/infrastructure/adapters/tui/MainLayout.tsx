@@ -1,5 +1,8 @@
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { Box, useApp, useInput, useStdin, useStdout } from 'ink';
+import path from 'path';
+import fs from 'fs';
+import { APP_PATHS } from '../../config/paths.js';
 import { Header } from './MainLayout/Header.js';
 import { JobList } from './MainLayout/JobList.js';
 import { ApplicationsPanel } from './MainLayout/ApplicationsPanel.js';
@@ -26,6 +29,14 @@ import {
     openUrl,
 } from '../../../services/index.js';
 import { PanelKey } from './MainLayout/panel-frame.js';
+import { ConfirmScanModal } from './MainLayout/ConfirmScanModal.js';
+import { ScanProgressModal } from './MainLayout/ScanProgressModal.js';
+import { PluginsModal } from './MainLayout/PluginsModal.js';
+import { runPluginsScanParallel } from '../../../core/use-cases/plugins/RunPluginsScanParallelUseCase.js';
+import { JsonJobRepository } from '../../storage/JsonJobRepository.js';
+import { getDevPlugins } from '../../plugins/PluginRegistry.js';
+import { getPluginsDir } from '../../plugins/PluginPathResolver.js';
+import type { PluginMetadata } from '../../../core/plugins/PluginMetadata.js';
 
 interface MainLayoutProps {
     autoScan?: boolean;
@@ -42,7 +53,13 @@ export const MainLayout = ({ autoScan, jobService, applicationService }: MainLay
     const [applicationPageIndex, setApplicationPageIndex] = useState(0);
     const [activePanel, setActivePanel] = useState<PanelKey>('jobs');
     const [status, setStatus] = useState('Cargando avisos locales...');
-    const [plugins] = useState(['Linkedin', 'Indeed']);
+    const [pluginsList, setPluginsList] = useState<PluginMetadata[]>([]);
+    const [selectedPluginId, setSelectedPluginId] = useState<string | null>(null);
+    const [isPluginsModalOpen, setIsPluginsModalOpen] = useState(false);
+    const [isPluginInstallMode, setIsPluginInstallMode] = useState(false);
+    const [pluginPathDraft, setPluginPathDraft] = useState('');
+    const [pluginsRevision, setPluginsRevision] = useState(0);
+    const [pluginMessage, setPluginMessage] = useState<string | undefined>();
     const [keywords, setKeywords] = useState<string[]>([]);
     const [selectedKeyword, setSelectedKeyword] = useState<string | null>(null);
     const [isKeywordsModalOpen, setIsKeywordsModalOpen] = useState(false);
@@ -53,6 +70,11 @@ export const MainLayout = ({ autoScan, jobService, applicationService }: MainLay
     const [isAutoScanRunning, setIsAutoScanRunning] = useState(false);
     const [isApplicationDetailModalOpen, setIsApplicationDetailModalOpen] = useState(false);
     const [applicationModalRevision, setApplicationModalRevision] = useState(0);
+    const [isConfirmScanOpen, setIsConfirmScanOpen] = useState(false);
+    const [isScanProgressOpen, setIsScanProgressOpen] = useState(false);
+    const [scanProgress, setScanProgress] = useState<{ plugin: string; message: string; progress: number } | null>(null);
+    const [scanPluginResults, setScanPluginResults] = useState<{ pluginId: string; count: number; error?: string }[]>([]);
+    const [abortController, setAbortController] = useState<AbortController | null>(null);
 
     const { exit } = useApp();
     const { isRawModeSupported, setRawMode } = useStdin();
@@ -139,6 +161,24 @@ export const MainLayout = ({ autoScan, jobService, applicationService }: MainLay
             }
         };
     }, [jobService, applicationService, autoScan]);
+
+    // Load plugins from registry - siempre recargar cuando se abre el modal
+    useEffect(() => {
+        const reloadPlugins = () => {
+            const loaded = getDevPlugins();
+            setPluginsList(loaded);
+            if (loaded.length > 0) {
+                // Mantener el seleccionado actual o seleccionar el primero
+                if (!selectedPluginId || !loaded.find(p => p.pluginId === selectedPluginId)) {
+                    setSelectedPluginId(loaded[0].pluginId);
+                }
+            } else {
+                setSelectedPluginId(null);
+            }
+        };
+        
+        reloadPlugins();
+    }, [selectedPluginId]); // Se ejecuta al iniciar y cuando selectedPluginId cambia
 
     useEffect(() => {
         if (keywords.length === 0) {
@@ -303,6 +343,258 @@ export const MainLayout = ({ autoScan, jobService, applicationService }: MainLay
         }
     };
 
+    const openPluginsModal = () => {
+        setPreviousPanel(activePanel);
+        setIsPluginsModalOpen(true);
+        setIsPluginInstallMode(false);
+        setPluginPathDraft('');
+        setPluginMessage(undefined);
+        
+        // Siempre recargar la lista al abrir el modal
+        const loaded = getDevPlugins();
+        setPluginsList(loaded);
+        if (loaded.length > 0) {
+            if (!selectedPluginId || !loaded.find(p => p.pluginId === selectedPluginId)) {
+                setSelectedPluginId(loaded[0].pluginId);
+            }
+        } else {
+            setSelectedPluginId(null);
+        }
+        
+        setStatus('Gestionando plugins...');
+    };
+
+    const closePluginsModal = () => {
+        setIsPluginsModalOpen(false);
+        setIsPluginInstallMode(false);
+        setPluginPathDraft('');
+        setPluginMessage(undefined);
+        setActivePanel(previousPanel);
+        setStatus('Plugins cerrados.');
+    };
+
+    const handleInstallPlugin = async () => {
+        const rawPath = pluginPathDraft.trim();
+        
+        if (!rawPath) {
+            setPluginMessage('La ruta no puede estar vacía.');
+            return;
+        }
+        
+        // ===================== INSTALL PLUGIN =====================
+        const inputPath = path.resolve(rawPath);
+
+        // 1. Verificar si existe (case-insensitive buscar en cwd)
+        let finalPath = inputPath;
+        if (!fs.existsSync(inputPath)) {
+            const cwd = process.cwd();
+            const baseName = path.basename(inputPath).toLowerCase();
+            
+            if (fs.existsSync(cwd)) {
+                const entries = fs.readdirSync(cwd);
+                let match = entries.find(e => e.toLowerCase() === baseName);
+                
+                if (!match) {
+                    for (const entry of entries) {
+                        const entryPath = path.join(cwd, entry);
+                        if (fs.statSync(entryPath).isDirectory()) {
+                            const subEntries = fs.readdirSync(entryPath);
+                            if (subEntries.some(e => e.toLowerCase() === baseName)) {
+                                match = entry;
+                                break;
+                            }
+                        }
+                    }
+                }
+                
+                if (match) {
+                    finalPath = path.join(cwd, match);
+                }
+            }
+        }
+        
+        if (!fs.existsSync(finalPath)) {
+            setPluginMessage('La ruta no existe');
+            return;
+        }
+        
+        const isFile = fs.statSync(finalPath).isFile();
+        
+        try {
+            setPluginMessage('Procesando...');
+            const pluginsDir = getPluginsDir();
+            const tempDir = path.join(pluginsDir, '_temp_install');
+
+            // Limpiar temp antes
+            if (fs.existsSync(tempDir)) {
+                fs.rmSync(tempDir, { recursive: true, force: true });
+            }
+            fs.mkdirSync(tempDir, { recursive: true });
+
+            let scrapperFile: string | null = null;
+
+            if (isFile) {
+                if (!finalPath.toLowerCase().endsWith('.scrapper')) {
+                    setPluginMessage('El archivo debe tener extensión .scrapper');
+                    return;
+                }
+                scrapperFile = finalPath;
+            } else {
+                const files = fs.readdirSync(finalPath);
+                scrapperFile = files.find(f => f.toLowerCase().endsWith('.scrapper')) || null;
+                
+                if (scrapperFile) {
+                    scrapperFile = path.join(finalPath, scrapperFile);
+                } else {
+                    setPluginMessage('No se encontró archivo .scrapper en la carpeta');
+                    return;
+                }
+            }
+
+            if (!scrapperFile) {
+                setPluginMessage('No se encontró archivo .scrapper');
+                return;
+            }
+
+            setPluginMessage('Descomprimiendo...');
+
+            // Usar JSZip
+            const JSZip = (await import('jszip')).default;
+            
+            const zipData = fs.readFileSync(scrapperFile);
+            const zip = await JSZip.loadAsync(zipData);
+            
+            // Extraer todos los archivos
+            const promises: Promise<void>[] = [];
+            zip.forEach((relativePath: string, zipEntry: any) => {
+                if (!zipEntry.dir) {
+                    const dest = path.join(tempDir, relativePath);
+                    const dir = path.dirname(dest);
+                    if (!fs.existsSync(dir)) {
+                        fs.mkdirSync(dir, { recursive: true });
+                    }
+                    const p = zipEntry.async('nodebuffer').then((content: Buffer) => {
+                        fs.writeFileSync(dest, content);
+                    });
+                    promises.push(p);
+                }
+            });
+            await Promise.all(promises);
+
+            // 4. Buscar estructura - puede haber subcarpeta o archivos sueltos
+            const tempFiles = fs.readdirSync(tempDir);
+            
+            // Buscar subcarpeta (el plugin puede estar dentro de una carpeta)
+            const subDirs = tempFiles.filter(f => {
+                const stat = fs.statSync(path.join(tempDir, f));
+                return stat.isDirectory();
+            });
+            
+            let pluginBaseDir = tempDir;
+            
+            // Si hay exactamente una subcarpeta, usarla como base del plugin
+            if (subDirs.length === 1) {
+                pluginBaseDir = path.join(tempDir, subDirs[0]);
+            }
+            
+            const pluginFiles = fs.readdirSync(pluginBaseDir);
+            const metadataFileName = pluginFiles.find(f => f.toLowerCase() === 'metadata.json');
+            
+            if (!metadataFileName) {
+                setPluginMessage('Falta metadata.json');
+                return;
+            }
+            
+            // 5. Validar metadata
+            const metadataContent = fs.readFileSync(path.join(pluginBaseDir, metadataFileName), 'utf-8');
+            let pluginData: { pluginId: string; name: string; pluginVersion: string; author?: string; mainFile?: string };
+            pluginData = JSON.parse(metadataContent);
+
+            if (!pluginData.pluginId || !pluginData.name || !pluginData.pluginVersion) {
+                setPluginMessage('metadata.json incompleto');
+                return;
+            }
+
+            // Buscar archivo scraper - usar mainFile del metadata o buscar cualquier .js/.ts
+            let jsFile: string;
+            if (pluginData.mainFile) {
+                jsFile = pluginFiles.find(f => f.toLowerCase() === pluginData.mainFile!.toLowerCase()) || pluginData.mainFile;
+            } else {
+                jsFile = pluginFiles.find(f => f.toLowerCase().endsWith('.js') || f.toLowerCase().endsWith('.ts')) || '';
+            }
+
+            if (!jsFile || !fs.existsSync(path.join(pluginBaseDir, jsFile))) {
+                setPluginMessage('Falta archivo scraper (.js/.ts)');
+                return;
+            }
+
+            // 6. Mover a carpeta final
+            setPluginMessage('Instalando...');
+            const pluginDir = path.join(pluginsDir, pluginData.pluginId);
+
+            if (fs.existsSync(pluginDir)) {
+                fs.rmSync(pluginDir, { recursive: true, force: true });
+            }
+            fs.renameSync(pluginBaseDir, pluginDir);
+
+            // 7. Recargar plugins
+            const loaded = getDevPlugins();
+            setPluginsList(loaded);
+            setSelectedPluginId(pluginData.pluginId);
+            setPluginsRevision(r => r + 1);
+            setIsPluginInstallMode(false);
+            setPluginPathDraft('');
+            setPluginMessage(`Plugin "${pluginData.name}" instalado.`);
+            setStatus(`Plugin "${pluginData.name}" instalado.`);
+        } catch (err) {
+            const msg = err instanceof Error ? err.message : 'Error desconocido';
+            setPluginMessage(`Error: ${msg}`);
+        } finally {
+            // Limpiar temp
+            try {
+                const pluginsDir = getPluginsDir();
+                const tempDir = path.join(pluginsDir, '_temp_install');
+                if (fs.existsSync(tempDir)) {
+                    fs.rmSync(tempDir, { recursive: true, force: true });
+                }
+            } catch {}
+        }
+    };
+
+    const handleDeletePlugin = async () => {
+        if (!selectedPluginId) {
+            setPluginMessage('No hay plugin seleccionado.');
+            return;
+        }
+
+        const pluginId = selectedPluginId;
+        setPluginMessage(`Eliminando ${pluginId}...`);
+
+        try {
+            const pluginsDir = getPluginsDir();
+            const pluginDir = path.join(pluginsDir, pluginId);
+
+            if (!fs.existsSync(pluginDir)) {
+                setPluginMessage('El plugin no está instalado.');
+                return;
+            }
+
+            // Eliminar directorio del plugin
+            fs.rmSync(pluginDir, { recursive: true, force: true });
+
+            // Recargar lista usando el registry
+            const loaded = getDevPlugins();
+            setPluginsList(loaded);
+            setSelectedPluginId(loaded.length > 0 ? loaded[0].pluginId : null);
+            setPluginsRevision(r => r + 1);
+            setPluginMessage(`Plugin "${pluginId}" eliminado.`);
+            setStatus(`Plugin "${pluginId}" eliminado.`);
+        } catch (err) {
+            const msg = err instanceof Error ? err.message : 'Error desconocido';
+            setPluginMessage(`Error al eliminar: ${msg}`);
+        }
+    };
+
     useEffect(() => {
         if (safeJobsPageIndex !== jobPageIndex) {
             setJobPageIndex(safeJobsPageIndex);
@@ -408,78 +700,211 @@ export const MainLayout = ({ autoScan, jobService, applicationService }: MainLay
         } catch {
             setStatus('No se pudo crear la postulación.');
         }
+};
+
+    const executeScan = async () => {
+        const signal = abortController?.signal ?? undefined;
+        
+        // Obtener IDs de los plugins activos
+        const pluginIds = pluginsList
+            .filter(p => p.enabled)
+            .map(p => p.pluginId);
+        
+        if (pluginIds.length === 0) {
+            setStatus('No hay plugins habilitados para escanear.');
+            return;
+        }
+
+        // Limpiar resultados anteriores (UI + archivo)
+        setJobsData([]);
+        setScanPluginResults([]);
+        try {
+            fs.unlinkSync(APP_PATHS.jobs);
+        } catch {}
+
+        try {
+            const result = await runPluginsScanParallel(pluginIds, (progress) => {
+                setScanProgress(progress);
+            }, signal);
+
+            // Guardar resultados por plugin
+            setScanPluginResults(result.pluginResults || []);
+
+            if (result.success && result.jobs.length > 0) {
+                await saveScannedJobs(result.jobs);
+                const repos = await loadScannedJobs();
+                const updatedApplications = await applicationService.fetchAppliedJobs();
+                const mapped = repos.map(mapDomainJobToViewJob);
+                setJobsData(markJobsAsApplied(mapped, updatedApplications));
+                setStatus(result.message);
+            } else {
+                setStatus(result.message || 'Sin resultados.');
+            }
+        } catch (err) {
+            setStatus('Error en el escaneo.');
+        } finally {
+            setIsScanProgressOpen(false);
+        }
+    };
+
+    const saveScannedJobs = async (jobs: any[]) => {
+        const repository = new JsonJobRepository();
+        await repository.saveScannedJobs(jobs);
+    };
+
+    const loadScannedJobs = async () => {
+        const repository = new JsonJobRepository();
+        return repository.getLastScannedJobs();
     };
 
     useInput((input, key) => {
         const normalizedInput = input.toLowerCase();
+        
         if (normalizedInput === 'q' || (key.ctrl && normalizedInput === 'c')) {
             exit();
             return;
         }
 
-if (isApplicationDetailModalOpen) {
-            if (key.escape) {
-                closeApplicationDetailModal();
-                return;
-            }
-            if (key.delete) {
-                void handleDeleteApplication();
-                return;
-            }
-            return;
-        }
+        const anyModalOpen = isApplicationDetailModalOpen || isKeywordsModalOpen || isPluginsModalOpen || isConfirmScanOpen || isScanProgressOpen;
 
-        if (isKeywordsModalOpen) {
-            if (key.escape) {
+        if (anyModalOpen) {
+            if (isApplicationDetailModalOpen) {
+                if (key.escape) {
+                    closeApplicationDetailModal();
+                    return;
+                }
+                if (key.delete) {
+                    void handleDeleteApplication();
+                    return;
+                }
+            }
+
+            if (isKeywordsModalOpen) {
+                if (key.escape) {
+                    if (isKeywordInsertMode) {
+                        cancelKeywordInsert();
+                    } else {
+                        closeKeywordsModal();
+                    }
+                    return;
+                }
+
+                if (key.return && isKeywordInsertMode) {
+                    void handleInsertKeyword();
+                    return;
+                }
+
+                if (normalizedInput === 'i' && !isKeywordInsertMode) {
+                    beginKeywordInsert();
+                    return;
+                }
+
+                if ((key.delete || key.backspace) && !isKeywordInsertMode) {
+                    void handleDeleteKeyword();
+                    return;
+                }
+
                 if (isKeywordInsertMode) {
-                    cancelKeywordInsert();
-                } else {
-                    closeKeywordsModal();
+                    if (key.backspace) {
+                        setKeywordDraft((current) => current.slice(0, -1));
+                        return;
+                    }
+
+                    if (input && input.length === 1 && !key.ctrl && !key.meta) {
+                        setKeywordDraft((current) => `${current}${input}`);
+                        return;
+                    }
+                }
+
+                return;
+            }
+
+            if (isConfirmScanOpen) {
+                if (key.escape) {
+                    setIsConfirmScanOpen(false);
+                    return;
+                }
+                if (key.return) {
+                    setIsConfirmScanOpen(false);
+                    setIsScanProgressOpen(true);
+                    setScanProgress({ plugin: 'init', message: 'Iniciando...', progress: 0 });
+                    setScanPluginResults([]);
+                    setAbortController(new AbortController());
+                    void executeScan();
+                    return;
                 }
                 return;
             }
 
-            if (key.return && isKeywordInsertMode) {
-                void handleInsertKeyword();
+            if (isScanProgressOpen) {
+                if (key.escape) {
+                    abortController?.abort();
+                    setIsScanProgressOpen(false);
+                    setStatus('Escaneo cancelado.');
+                    return;
+                }
                 return;
             }
 
-            if (normalizedInput === 'i' && !isKeywordInsertMode) {
-                beginKeywordInsert();
-                return;
-            }
-
-            if ((key.delete || key.backspace) && !isKeywordInsertMode) {
-                void handleDeleteKeyword();
-                return;
-            }
-
-            if (isKeywordInsertMode) {
-                if (key.backspace) {
-                    setKeywordDraft((current) => current.slice(0, -1));
+if (isPluginsModalOpen) {
+                if (key.escape) {
+                    closePluginsModal();
                     return;
                 }
 
-                if (input && input.length === 1 && !key.ctrl && !key.meta) {
-                    setKeywordDraft((current) => `${current}${input}`);
+                // Input para install mode - primero agregar caracteres
+                if (isPluginInstallMode) {
+                    if (key.return) {
+                        void handleInstallPlugin();
+                        return;
+                    }
+                    if (key.backspace) {
+                        setPluginPathDraft((current) => current.slice(0, -1));
+                        return;
+                    }
+                    if (input && input.length === 1 && !key.ctrl && !key.meta) {
+                        setPluginPathDraft((current) => `${current}${input}`);
+                        return;
+                    }
                     return;
                 }
+
+                // A - add plugin (solo cuando NO estamos en install mode)
+                if (normalizedInput === 'a') {
+                    setIsPluginInstallMode(true);
+                    setPluginPathDraft('');
+                    setPluginMessage(undefined);
+                    return;
+                }
+
+                // E - delete plugin
+                if (normalizedInput === 'e') {
+                    void handleDeletePlugin();
+                    return;
+                }
+
+                return;
             }
 
             return;
         }
 
-        if (key.tab || input === '\t') {
-            setActivePanel((currentPanel) => {
-                if (currentPanel === 'jobs') return 'detail';
-                if (currentPanel === 'detail') return 'applications';
-                return 'jobs';
-            });
+        // Global actions - blocked when any modal is open (handled above)
+        // S - scan
+        if (normalizedInput === 's') {
+            setIsConfirmScanOpen(true);
             return;
         }
 
+        // K - keywords modal
         if (normalizedInput === 'k') {
             openKeywordsModal();
+            return;
+        }
+
+        // P - plugins modal
+        if (normalizedInput === 'p') {
+            openPluginsModal();
             return;
         }
 
@@ -495,6 +920,18 @@ if (isApplicationDetailModalOpen) {
 
         if (key.return && activePanel === 'jobs') {
             void handleApplySelectedJob();
+            return;
+        }
+
+        // Tab para cambiar entre paneles
+        if (key.tab) {
+            if (activePanel === 'jobs') {
+                setActivePanel('applications');
+            } else if (activePanel === 'applications') {
+                setActivePanel('detail');
+            } else if (activePanel === 'detail') {
+                setActivePanel('jobs');
+            }
             return;
         }
 
@@ -524,7 +961,7 @@ if (isApplicationDetailModalOpen) {
     return (
         <Box height={stdout.rows} width={stdout.columns} flexDirection="column">
             <Header
-                pluginsCount={plugins.length}
+                pluginsCount={pluginsList.length}
                 keywordsCount={keywords.length}
                 status={isAutoScanRunning ? 'Escaneo automático en curso...' : status}
             />
@@ -577,6 +1014,52 @@ if (isApplicationDetailModalOpen) {
                     width={keywordsModalWidth}
                     height={keywordsModalHeight}
                     onSelectKeyword={setSelectedKeyword}
+                />
+            ) : null}
+
+            {isConfirmScanOpen ? (
+                <ConfirmScanModal
+                    isActive
+                    keywords={keywords}
+                    width={keywordsModalWidth}
+                    height={keywordsModalHeight}
+                    onConfirm={() => {}}
+                    onCancel={() => setIsConfirmScanOpen(false)}
+                />
+            ) : null}
+
+            {isScanProgressOpen ? (
+                <ScanProgressModal
+                    isActive
+                    keywords={keywords}
+                    plugins={pluginsList.map(p => p.pluginId)}
+                    currentPlugin={scanProgress?.plugin || ''}
+                    message={scanProgress?.message || ''}
+                    progress={scanProgress?.progress || 0}
+                    width={keywordsModalWidth}
+                    height={keywordsModalHeight}
+                    pluginResults={scanPluginResults}
+                    onCancel={() => {
+                        abortController?.abort();
+                        setIsScanProgressOpen(false);
+                        setStatus('Escaneo cancelado.');
+                    }}
+                />
+            ) : null}
+
+            {isPluginsModalOpen ? (
+                <PluginsModal
+                    plugins={pluginsList}
+                    selectedPlugin={selectedPluginId}
+                    isActive
+                    isInstallMode={isPluginInstallMode}
+                    draftPath={pluginPathDraft}
+                    listLimit={keywordsModalListLimit}
+                    revision={pluginsRevision}
+                    width={keywordsModalWidth}
+                    height={keywordsModalHeight}
+                    onSelectPlugin={setSelectedPluginId}
+                    message={pluginMessage}
                 />
             ) : null}
 
