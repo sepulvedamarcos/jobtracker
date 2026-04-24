@@ -12,50 +12,121 @@
   <img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="GPLv3 badge" />
 </p>
 
-**JobTracker** es una TUI de búsqueda y seguimiento de empleo pensada para centralizar avisos, palabras clave y postulaciones en una sola interfaz rápida de terminal.
+**JobTracker** es una TUI de búsqueda y seguimiento de empleo которая centraliza avisos, palabras clave y postulaciones en una sola interfaz rápida de terminal.
 
-Este proyecto toma la idea base de **TrabajandoScanner** y la adapta a un stack distinto: **Node.js + TypeScript + Ink**. La meta es conservar la misma experiencia táctil y liviana, pero con una arquitectura más portable entre lenguajes y plataformas.
+## Pantalla principal
 
-## ¿Por qué usar JobTracker?
-
-En vez de abrir múltiples pestañas y volver a filtrar los mismos portales una y otra vez, JobTracker busca dar una vista única, ordenada y operable desde teclado.
-
-- **Interfaz de terminal moderna**: construida con **React + Ink** para una experiencia ágil en consola.
-- **Arquitectura preparada para crecer**: separación entre `core/`, `infrastructure/` y `adapters/`.
-- **Persistencia local por archivo**: rutas de aplicación administradas con `env-paths`.
-- **Flujo orientado a productividad**: escaneo, keywords, postulaciones y plugins pensados como partes del mismo sistema.
-
-## Estado actual
-
-La base del proyecto ya incluye:
-
-- Splash screen de arranque.
-- Layout principal de la TUI.
-- Navegación y comandos CLI con `commander`.
-- Persistencia local con repositorios JSON.
-- Estructura preparada para keywords, postulaciones y plugins.
+```
+┌─────────────────────────────────────────────────────────────┐
+│  🔍 JobTracker v0.0.2    [Plugins: 1] [Keywords: 3]          │
+│  Status: Bienvenido! Sin datos previos.                     │
+├────────────────────────────┬────────────────────────────────┤
+│  📋 Avisos Capturados      │  📬 Postulaciones              │
+│  ──────────────────────    │  ──────────────────            │
+│  1. Senior Developer...    │  1. Backend Dev - TechCorp     │
+│     Bumeran | hace 2d     │     LinkedIn | 15/04/2026      │
+│  2. Node.js Engineer...   │  2. Full Stack - StartupX       │
+│     Computrabajo | hace 3d│     Indeed | 10/04/2026         │
+├────────────────────────────┴────────────────────────────────┤
+│  📝 Detalle: Senior Developer @ TechCorp                    │
+│     Keywords: [nodejs] [backend] [remote]                  │
+│     📅 20/04/2026 | 🔗 https://...                          │
+├─────────────────────────────────────────────────────────────┤
+│  [S] Escanear  [K] Keywords  [P] Plugins  [Tab] Panel  [Q]  │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ## Hotkeys
 
-Atajos de teclado disponibles en la TUI:
-
 ### Navegación
-- **Tab**: Cambiar entre paneles (Avisos → Detalle → Postulaciones)
-- **↑/↓**: Navegar entre registros
-- **PageUp/PageDown**: Paginar listas
-- **Esc**: Cerrar diálogos/modales
+| Tecla | Acción |
+|-------|--------|
+| `↑` / `↓` | Navegar entre registros del panel activo |
+| `Tab` | Cambiar entre paneles (Avisos → Postulaciones → Detalle) |
+| `PageUp` / `PageDown` | Paginar en el panel activo |
 
-### Acciones
-- **Enter** (panel avisos): Copiar aviso a postulaciones
-- **Enter** (panel postulaciones): Abrir diálogo de detalle
-- **Enter** (panel detalle): Abrir enlace en navegador
-- **Supr** (diálogo): Eliminar postulación seleccionada
+### Acciones rápidas
+| Tecla | Panel | Acción |
+|-------|-------|--------|
+| `Enter` | Avisos | Copiar aviso a postulaciones |
+| `Enter` | Postulaciones | Abrir detalle de postulación |
+| `Enter` | Detalle | Abrir enlace del aviso en navegador |
+| `Supr` | Modal Detalle | Eliminar postulación seleccionada |
 
 ### Funciones globales
-- **F2**: Iniciar escaneo
-- **K**: Abrir modal de keywords
-- **F4**: Abrir panel de plugins
-- **Q**: Salir de la aplicación
+| Tecla | Acción |
+|-------|--------|
+| `S` | Iniciar escaneo con plugins |
+| `K` | Abrir modal de keywords |
+| `P` | Abrir panel de plugins |
+| `Q` | Salir de la aplicación |
+
+### Modal de Keywords (K)
+| Tecla | Acción |
+|-------|--------|
+| `I` | Insertar nueva keyword |
+| `Enter` | Guardar keyword (en modo inserción) |
+| `Supr` / `Del` | Eliminar keyword seleccionada |
+| `Esc` | Cerrar modal |
+
+### Modal de Plugins (P)
+| Tecla | Acción |
+|-------|--------|
+| `A` | Agregar plugin (ingresar ruta .scrapper) |
+| `E` | Eliminar plugin seleccionado |
+| `Enter` | Instalar plugin (en modo instalación) |
+| `Esc` | Cerrar modal |
+
+## Opciones CLI
+
+### Comandos npm
+
+```bash
+# Desarrollo - TUI completa
+npm run dev
+
+# Con escaneo automático al iniciar
+npm run dev:find
+
+# Agregar keyword sin entrar a TUI
+npm run dev:add -- "nodejs"
+
+# Eliminar keyword sin entrar a TUI
+npm run dev:del -- "nodejs"
+
+# Modo silencioso (sin TUI)
+npm run dev:silent
+
+# Imprimir jobs guardados
+npm run print:jobs
+
+# Gestión de plugins
+npm run dev:plugin          # Abrir TUI con plugins en modo desarrollo
+npm run dev:plugin:find     # Plugin + escaneo automático
+npm run dev:install-plugin  # Instalar plugin por ruta
+```
+
+### Flags directos
+
+```bash
+# Escanear al iniciar
+npx tsx src/infrastructure/adapters/cli/app.tsx --find
+
+# Sin splash screen
+npx tsx src/infrastructure/adapters/cli/app.tsx --noSplash
+
+# Agregar keyword
+npx tsx src/infrastructure/adapters/cli/app.tsx --addKey "backend"
+
+# Eliminar keyword
+npx tsx src/infrastructure/adapters/cli/app.tsx --delKey "backend"
+
+# Instalar plugin
+npx tsx src/infrastructure/adapters/cli/app.tsx --addPlugin "/ruta/al/plugin.scrapper"
+
+# Ver ayuda completa
+npx tsx src/infrastructure/adapters/cli/app.tsx --help
+```
 
 ## Screenshots
 
@@ -74,41 +145,20 @@ Modal centrado para agregar o eliminar palabras clave.
 
 ![Detail Modal](./images/image_3.png)
 
-## Comandos disponibles
+## Stack técnico
+
+- **Lenguaje**: TypeScript
+
+Para más detalles sobre la arquitectura, patrones y especificaciones técnicas, consulta el [SPEC.md](./SPEC.md) (disponible también en [inglés](./Spec.en.md)).
+
+## Instalación
 
 ```bash
 npm install
 npm run dev
 ```
 
-Opciones CLI:
-
-- `npm run dev:now` — inicia con escaneo inmediato.
-- `npm run dev:silent` — ejecuta sin TUI.
-- `npm run dev:add` — modo para agregar keyword.
-- `npm run print:jobs` — imprime los jobs guardados.
-
-## Stack técnico
-
-- **Lenguaje**: TypeScript
-- **Runtime**: Node.js
-- **UI**: React + Ink
-- **CLI**: Commander
-- **Paths de sistema**: env-paths
-- **Persistencia**: JSON local
-
-## Idea del proyecto
-
-JobTracker está pensado para evolucionar hacia una herramienta multiplataforma que permita:
-
-- capturar ofertas desde distintos orígenes,
-- clasificar resultados por palabra clave,
-- marcar postulaciones,
-- y mantener un historial local reutilizable.
-
 ## Contribuir
-
-Las contribuciones son bienvenidas, ya sea reportando bugs, proponiendo mejoras o enviando código.
 
 1. Haz un fork del repositorio
 2. Crea una rama (`git checkout -b feature/mi-cambio`)
