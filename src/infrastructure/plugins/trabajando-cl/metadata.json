@@ -1,0 +1,11 @@
+{
+  "pluginId": "trabajando-cl",
+  "name": "Trabajando.cl",
+  "pluginVersion": "1.0.0",
+  "author": "JobTracker",
+  "enabled": true,
+  "mainFile": "scraper.js",
+  "capabilities": {
+    "supportsKeywordSearch": true
+  }
+}
