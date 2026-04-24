@@ -4,18 +4,9 @@ import path from 'path';
 import fs from 'fs';
 import { getPluginsDir } from './PluginPathResolver.js';
 
-const DEV_PLUGINS: Record<string, string> = {
-  'trabajando-cl': 'trabajando-cl',
-  'computrabajo-cl': 'computrabajo-cl',
-};
-
-const isPluginDevMode = process.env.JOBTRACKER_PLUGIN_DEV === 'true';
-
 export const getPlugins = (): PluginMetadata[] => {
   const plugins: PluginMetadata[] = [];
-  const pluginsDir = getPluginsDir(); // AQUÍ está la magia - retorna según modo
-  
-  console.log('[PluginRegistry] getPlugins():', { isPluginDevMode, pluginsDir, DEV_PLUGINS: Object.keys(DEV_PLUGINS) });
+  const pluginsDir = getPluginsDir();
   
   if (fs.existsSync(pluginsDir)) {
     const entries = fs.readdirSync(pluginsDir, { withFileTypes: true });
@@ -23,12 +14,7 @@ export const getPlugins = (): PluginMetadata[] => {
     for (const entry of entries) {
       if (!entry.isDirectory()) continue;
       if (entry.name.startsWith('_')) continue; // skip temp dirs
-      
-      // En modo dev:plugin, solo incluir los de DEV_PLUGINS
-      if (isPluginDevMode && !DEV_PLUGINS[entry.name]) {
-        console.log('[PluginRegistry] Skip (no en DEV_PLUGINS):', entry.name);
-        continue;
-      }
+      if (entry.name === 'plugins') continue; // skip parent plugins dir
       
       const metadataPath = path.join(pluginsDir, entry.name, 'metadata.json');
       if (fs.existsSync(metadataPath)) {

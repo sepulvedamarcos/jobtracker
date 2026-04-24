@@ -8,14 +8,6 @@ import type { PluginMetadata, PluginCapabilities } from '../../plugins/PluginMet
 
 const execAsync = promisify(exec);
 
-// Log a archivo para debug
-const logDebug = (...args: unknown[]) => {
-  const msg = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
-  const logPath = path.join('/home/marcos/Desarrollo/Nodejs/JobTracker/debug-install.log');
-  const timestamp = new Date().toISOString();
-  fs.writeFileSync(logPath, `[${timestamp}] ${msg}\n`, { flag: 'a' });
-};
-
 export interface InstallPluginResult {
   success: boolean;
   message: string;
@@ -81,8 +73,6 @@ export const installPlugin = async (
   };
 
   onProgress?.('Iniciando instalación del plugin...');
-  logDebug('Iniciando', scrapperPath);
-  console.log('[InstallPlugin] Iniciando, scrapperPath:', scrapperPath);
 
   // 1. Validar que el archivo existe y es un .scrapper
   if (!scrapperPath.toLowerCase().endsWith('.scrapper')) {
@@ -121,7 +111,6 @@ export const installPlugin = async (
 
     // 3. Validar estructura
     const files = fs.readdirSync(tempDir);
-    logDebug('Archivos en tempDir:', files);
     const metadataFile = files.find(f => f === 'metadata.json');
     const jsFile = files.find(f => f.endsWith('.js'));
 
@@ -175,18 +164,12 @@ export const installPlugin = async (
 
     // 7. Mover a la carpeta final
     const pluginDir = path.join(pluginsDir, pluginData.pluginId);
-    logDebug('Moviendo a:', pluginDir);
-    console.log('[InstallPlugin] Moviendo a:', pluginDir);
     
     if (fs.existsSync(pluginDir)) {
-      logDebug('Ya existe, eliminando...');
-      console.log('[InstallPlugin] Ya existe, eliminando...');
       fs.rmSync(pluginDir, { recursive: true });
     }
     
     fs.renameSync(tempDir, pluginDir);
-    logDebug('Movido correctamente');
-    console.log('[InstallPlugin] Movido correctamente');
 
     // 8. Registrar en metadata
     const finalMetadata: PluginMetadata = {
@@ -218,23 +201,19 @@ export const installPlugin = async (
 
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Error desconocido';
-    console.error('[InstallPlugin] Error:', msg);
     return { success: false, message: `Error durante instalación: ${msg}` };
   } finally {
-    // DEBUG: Dejar commented para verificar si borra otros plugins
-    /*
+    // Limpiar temporales solo si existen
     try {
       if (fs.existsSync(tempDir)) {
-        console.log('[InstallPlugin] Limpiando tempDir:', tempDir);
         fs.rmSync(tempDir, { recursive: true });
       }
       const tempZip = scrapperPath + '.zip';
       if (fs.existsSync(tempZip)) {
         fs.unlinkSync(tempZip);
       }
-    } catch (e) {
-      console.error('[InstallPlugin] Error al limpiar:', e);
+    } catch {
+      // Ignorar errores al limpiar
     }
-    */
   }
 };
