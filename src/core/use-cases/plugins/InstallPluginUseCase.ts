@@ -73,6 +73,7 @@ export const installPlugin = async (
   };
 
   onProgress?.('Iniciando instalación del plugin...');
+  console.log('[InstallPlugin] Iniciando, scrapperPath:', scrapperPath);
 
   // 1. Validar que el archivo existe y es un .scrapper
   if (!scrapperPath.toLowerCase().endsWith('.scrapper')) {
@@ -164,12 +165,15 @@ export const installPlugin = async (
 
     // 7. Mover a la carpeta final
     const pluginDir = path.join(pluginsDir, pluginData.pluginId);
+    console.log('[InstallPlugin] Moviendo a:', pluginDir);
     
     if (fs.existsSync(pluginDir)) {
+      console.log('[InstallPlugin] Ya existe, eliminando...');
       fs.rmSync(pluginDir, { recursive: true });
     }
     
     fs.renameSync(tempDir, pluginDir);
+    console.log('[InstallPlugin] Movido correctamente');
 
     // 8. Registrar en metadata
     const finalMetadata: PluginMetadata = {
@@ -201,19 +205,23 @@ export const installPlugin = async (
 
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Error desconocido';
+    console.error('[InstallPlugin] Error:', msg);
     return { success: false, message: `Error durante instalación: ${msg}` };
   } finally {
-    // Limpiar temporales solo si existen (puede que ya se haya renombrado)
+    // DEBUG: Dejar commented para verificar si borra otros plugins
+    /*
     try {
       if (fs.existsSync(tempDir)) {
+        console.log('[InstallPlugin] Limpiando tempDir:', tempDir);
         fs.rmSync(tempDir, { recursive: true });
       }
       const tempZip = scrapperPath + '.zip';
       if (fs.existsSync(tempZip)) {
         fs.unlinkSync(tempZip);
       }
-    } catch {
-      // Ignorar errores al limpiar (ya se movió o no existe)
+    } catch (e) {
+      console.error('[InstallPlugin] Error al limpiar:', e);
     }
+    */
   }
 };
