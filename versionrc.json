@@ -1,0 +1,6 @@
+{
+  "infile": "CHANGELOG.md",
+  "message": "chore(release): {version}",
+  "tagPrefix": "",
+  "commitAll": false
+}
