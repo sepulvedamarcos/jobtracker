@@ -393,87 +393,56 @@ export const MainLayout = ({ autoScan, jobService, applicationService }: MainLay
         
         // ===================== INSTALL PLUGIN =====================
         const inputPath = path.resolve(rawPath);
-        logFile('inputPath (resolve): ' + inputPath);
+        logFile('inputPath: ' + inputPath);
         
-        // 1. Verificar si existe (case-insensitive buscar en cwd)
-        let finalPath = inputPath;
+        // Si no existe, error simple
         if (!fs.existsSync(inputPath)) {
-            const cwd = process.cwd();
-            const baseName = path.basename(inputPath).toLowerCase();
-            
-            if (fs.existsSync(cwd)) {
-                const entries = fs.readdirSync(cwd);
-                let match = entries.find(e => e.toLowerCase() === baseName);
-                
-                if (!match) {
-                    for (const entry of entries) {
-                        const entryPath = path.join(cwd, entry);
-                        if (fs.statSync(entryPath).isDirectory()) {
-                            const subEntries = fs.readdirSync(entryPath);
-                            if (subEntries.some(e => e.toLowerCase() === baseName)) {
-                                match = entry;
-                                break;
-                            }
-                        }
-                    }
-                }
-                
-                if (match) {
-                    finalPath = path.join(cwd, match);
-                }
-            }
-        }
-        
-        if (!fs.existsSync(finalPath)) {
             setPluginMessage('La ruta no existe');
-            logFile('ERROR: finalPath no existe: ' + finalPath);
+            logFile('ERROR: no existe: ' + inputPath);
             return;
         }
         
-        logFile('finalPath final: ' + finalPath);
+        // Determinar si es archivo o directorio
+        let finalPath = inputPath;
+        if (fs.statSync(inputPath).isDirectory()) {
+            // Es directorio: buscar archivo .scrapper dentro
+            const files = fs.readdirSync(inputPath);
+            const scrapper = files.find(f => f.toLowerCase().endsWith('.scrapper'));
+            if (scrapper) {
+                finalPath = path.join(inputPath, scrapper);
+                logFile('Encontrado .scrapper en directorio: ' + finalPath);
+            } else {
+                setPluginMessage('No hay archivo .scrapper en la carpeta');
+                logFile('ERROR: no hay .scrapper en: ' + inputPath);
+                return;
+            }
+        }
         
-        const isFile = fs.statSync(finalPath).isFile();
+        // Verificar que es .scrapper
+        if (!finalPath.toLowerCase().endsWith('.scrapper')) {
+            setPluginMessage('El archivo debe ser .scrapper');
+            logFile('ERROR: no es .scrapper: ' + finalPath);
+            return;
+        }
         
+        logFile('finalPath: ' + finalPath);
+        
+        // Usar el archivo directamente
+        const scrapperFile = finalPath;
+
         try {
             setPluginMessage('Procesando...');
-            logFile('Path resolved: ' + finalPath);
+            logFile('Procesando: ' + scrapperFile);
+            
             const pluginsDir = getPluginsDir();
-            logFile('pluginsDir: ' + pluginsDir);
             const tempDir = path.join(pluginsDir, '_temp_install');
             logFile('tempDir: ' + tempDir);
-
+            
             // Limpiar temp antes
             if (fs.existsSync(tempDir)) {
                 fs.rmSync(tempDir, { recursive: true, force: true });
             }
             fs.mkdirSync(tempDir, { recursive: true });
-
-            let scrapperFile: string | null = null;
-
-            if (isFile) {
-                if (!finalPath.toLowerCase().endsWith('.scrapper')) {
-                    setPluginMessage('El archivo debe tener extensión .scrapper');
-                    return;
-                }
-                scrapperFile = finalPath;
-            } else {
-                const files = fs.readdirSync(finalPath);
-                scrapperFile = files.find(f => f.toLowerCase().endsWith('.scrapper')) || null;
-                
-                if (scrapperFile) {
-                    scrapperFile = path.join(finalPath, scrapperFile);
-                } else {
-                    setPluginMessage('No se encontró archivo .scrapper en la carpeta');
-                    return;
-                }
-            }
-
-            if (!scrapperFile) {
-                setPluginMessage('No se encontró archivo .scrapper');
-                return;
-            }
-
-            setPluginMessage('Descomprimiendo...');
 
             // Usar JSZip
             const JSZip = (await import('jszip')).default;
@@ -497,8 +466,8 @@ export const MainLayout = ({ autoScan, jobService, applicationService }: MainLay
                 }
             });
             await Promise.all(promises);
-
-            // 4. Buscar estructura - puede haber subcarpeta o archivos sueltos
+            
+            // Buscar estructura - puede haber subcarpeta o archivos sueltos
             const tempFiles = fs.readdirSync(tempDir);
             
             // Buscar subcarpeta (el plugin puede estar dentro de una carpeta)
