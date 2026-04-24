@@ -52,7 +52,7 @@ export const installPlugin = async (
   onProgress?: (message: string) => void
 ): Promise<InstallPluginResult> => {
   const paths = envPaths('jobtracker', { suffix: '' });
-  const pluginsDir = paths.data;
+  const pluginsDir = path.join(paths.data, 'plugins');
   
   const getPluginsMetadataPath = () => path.join(pluginsDir, 'PluginsMetadata.json');
   
@@ -88,6 +88,11 @@ export const installPlugin = async (
   const tempDir = path.join(pluginsDir, '_temp_install');
 
   try {
+    // Asegurar que existe pluginsDir
+    if (!fs.existsSync(pluginsDir)) {
+      fs.mkdirSync(pluginsDir, { recursive: true });
+    }
+    
     // Limpiar directorio temporal
     if (fs.existsSync(tempDir)) {
       fs.rmSync(tempDir, { recursive: true });
@@ -198,13 +203,17 @@ export const installPlugin = async (
     const msg = err instanceof Error ? err.message : 'Error desconocido';
     return { success: false, message: `Error durante instalación: ${msg}` };
   } finally {
-    // Limpiar temporales
-    if (fs.existsSync(tempDir)) {
-      fs.rmSync(tempDir, { recursive: true });
-    }
-    const tempZip = scrapperPath + '.zip';
-    if (fs.existsSync(tempZip)) {
-      fs.unlinkSync(tempZip);
+    // Limpiar temporales solo si existen (puede que ya se haya renombrado)
+    try {
+      if (fs.existsSync(tempDir)) {
+        fs.rmSync(tempDir, { recursive: true });
+      }
+      const tempZip = scrapperPath + '.zip';
+      if (fs.existsSync(tempZip)) {
+        fs.unlinkSync(tempZip);
+      }
+    } catch {
+      // Ignorar errores al limpiar (ya se movió o no existe)
     }
   }
 };
