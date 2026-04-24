@@ -392,10 +392,25 @@ export const MainLayout = ({ autoScan, jobService, applicationService }: MainLay
         }
         
         // ===================== INSTALL PLUGIN =====================
-        const inputPath = path.resolve(rawPath);
+        let inputPath = path.resolve(rawPath);
         logFile('inputPath: ' + inputPath);
         
-        // Si no existe, error simple
+        // Si no existe, buscar case-insensitive en el directorio padre
+        if (!fs.existsSync(inputPath)) {
+            const dir = path.dirname(inputPath);
+            const base = path.basename(inputPath);
+            
+            if (fs.existsSync(dir)) {
+                const entries = fs.readdirSync(dir);
+                const match = entries.find(e => e.toLowerCase() === base.toLowerCase());
+                if (match) {
+                    inputPath = path.join(dir, match);
+                    logFile('Case-insensitive match: ' + inputPath);
+                }
+            }
+        }
+        
+        // Si sigue sin existir, error
         if (!fs.existsSync(inputPath)) {
             setPluginMessage('La ruta no existe');
             logFile('ERROR: no existe: ' + inputPath);
@@ -403,14 +418,12 @@ export const MainLayout = ({ autoScan, jobService, applicationService }: MainLay
         }
         
         // Determinar si es archivo o directorio
-        let finalPath = inputPath;
         if (fs.statSync(inputPath).isDirectory()) {
             // Es directorio: buscar archivo .scrapper dentro
             const files = fs.readdirSync(inputPath);
             const scrapper = files.find(f => f.toLowerCase().endsWith('.scrapper'));
             if (scrapper) {
-                finalPath = path.join(inputPath, scrapper);
-                logFile('Encontrado .scrapper en directorio: ' + finalPath);
+                logFile('Encontrado .scrapper en directorio: ' + scrapper);
             } else {
                 setPluginMessage('No hay archivo .scrapper en la carpeta');
                 logFile('ERROR: no hay .scrapper en: ' + inputPath);
@@ -419,16 +432,16 @@ export const MainLayout = ({ autoScan, jobService, applicationService }: MainLay
         }
         
         // Verificar que es .scrapper
-        if (!finalPath.toLowerCase().endsWith('.scrapper')) {
+        if (!inputPath.toLowerCase().endsWith('.scrapper')) {
             setPluginMessage('El archivo debe ser .scrapper');
-            logFile('ERROR: no es .scrapper: ' + finalPath);
+            logFile('ERROR: no es .scrapper: ' + inputPath);
             return;
         }
         
-        logFile('finalPath: ' + finalPath);
+        logFile('finalPath: ' + inputPath);
         
         // Usar el archivo directamente
-        const scrapperFile = finalPath;
+        const scrapperFile = inputPath;
 
         try {
             setPluginMessage('Procesando...');
