@@ -139,7 +139,7 @@ async function scan(input: PluginScraperInput): Promise<Job[]> {
         
         for (const linkEl of jobLinks) {
           try {
-            const href = await linkEl.evaluate(el => el.href);
+            const href = await linkEl.evaluate((el: any) => el.href);
             const titleText = await linkEl.evaluate(el => el.textContent?.trim());
             
             if (href && titleText && href.includes('/ofertas-de-trabajo/') && titleText.length > 3) {
