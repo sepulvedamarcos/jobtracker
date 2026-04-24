@@ -1,9 +1,10 @@
 {
   "name": "jobtracker",
-  "version": "0.3.0",
+  "version": "0.3.2",
   "description": "TUI para búsqueda y seguimiento de empleo",
   "main": "index.js",
   "scripts": {
+    "build": "tsc",
     "dev": "clear && tsx --tsconfig tsconfig.json src/infrastructure/adapters/cli/app.tsx",
     "dev:silent": "clear && tsx src/infrastructure/adapters/cli/app.tsx --silent",
     "dev:add": "clear && tsx src/infrastructure/adapters/cli/app.tsx --addKey",
