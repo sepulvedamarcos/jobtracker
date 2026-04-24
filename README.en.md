@@ -1,51 +1,66 @@
 # JobTracker 🚀
 
-<p align="center">
-  <a href="./README.md">Español</a> ·
-  <a href="./README.en.md"><strong>English</strong></a>
-</p>
+[Español](./README.md)
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Node.js-339933?logo=node.js&logoColor=white" alt="Node.js badge" />
-  <img src="https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white" alt="TypeScript badge" />
-  <img src="https://img.shields.io/badge/Ink-000000?logo=react&logoColor=61DAFB" alt="Ink badge" />
-  <img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="GPLv3 badge" />
+  <img src="https://img.shields.io/badge/Node.js-339933?logo=node.js&logoColor=white" alt="Node.js" />
+  <img src="https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Ink-000000?logo=react&logoColor=61DAFB" alt="Ink" />
+  <img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="GPLv3" />
 </p>
 
-**JobTracker** is a job search and tracking TUI designed to centralize listings, keywords, and applications in one fast terminal interface.
+**JobTracker** is a TUI for job search and tracking that centralizes listings, keywords, and applications in one fast terminal interface.
 
-## Main Screen
+*The tool that helps you stay in control of your job search.*
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│  🔍 JobTracker v0.0.2    [Plugins: 1] [Keywords: 3]          │
-│  Status: Welcome! No previous data.                         │
-├────────────────────────────┬────────────────────────────────┤
-│  📋 Job Listings           │  📬 Applications               │
-│  ──────────────────────    │  ──────────────────            │
-│  1. Senior Developer...   │  1. Backend Dev - TechCorp     │
-│     Bumeran | 2d ago      │     LinkedIn | 04/15/2026       │
-│  2. Node.js Engineer...   │  2. Full Stack - StartupX       │
-│     Computrabajo | 3d ago │     Indeed | 04/10/2026          │
-├────────────────────────────┴────────────────────────────────┤
-│  📝 Detail: Senior Developer @ TechCorp                    │
-│     Keywords: [nodejs] [backend] [remote]                  │
-│     📅 04/20/2026 | 🔗 https://...                          │
-├─────────────────────────────────────────────────────────────┤
-│  [S] Scan  [K] Keywords  [P] Plugins  [Tab] Panel  [Q]  │
-└─────────────────────────────────────────────────────────────┘
-```
+## Why JobTracker?
+
+Instead of opening multiple tabs and re-filtering the same job boards again and again, JobTracker gives you a single, organized, keyboard-driven view.
+
+- **Fast and lightweight**: built with React + Ink for a fast console experience.
+- **Extensible by design**: plugin system to add new job boards.
+- **Your data on your machine**: all information stored locally in JSON.
+- **Productivity first**: scanning, keywords, applications and plugins as part of one system.
+
+## What makes it different
+
+- **One single place**: all job listings from different portals in one unified list.
+- **Automatic keywords**: search with your configured words across all plugins.
+- **Application tracking**: mark where you applied and its status.
+- **Third-party plugins**: any developer can create new scrapers.
+
+## Architecture
+
+JobTracker follows pragmatic engineering principles:
+
+- **Clean Architecture**: separation between business logic and infrastructure.
+- **Screaming Architecture**: the project structure reflects its purpose.
+- **Hexagonal Architecture**: ports and adapters to isolate the core.
+- **Repository Pattern**: data access behind interfaces.
+
+## Screenshots
+
+### Splash
+Startup screen with version and status indicators.
+
+### Main environment
+Three-panel view with keyboard navigation.
+
+### Keywords dialog
+Modal to manage search keywords.
 
 ## Hotkeys
 
 ### Navigation
+
 | Key | Action |
 |-----|--------|
-| `↑` / `↓` | Navigate between records in active panel |
+| `↑` / `↓` | Navigate between records in the active panel |
 | `Tab` | Switch between panels (Jobs → Applications → Detail) |
-| `PageUp` / `PageDown` | Paginate in active panel |
+| `PageUp` / `PageDown` | Paginate in the active panel |
 
-### Quick Actions
+### Quick actions
+
 | Key | Panel | Action |
 |-----|-------|--------|
 | `Enter` | Jobs | Copy job to applications |
@@ -53,7 +68,8 @@
 | `Enter` | Detail | Open job link in browser |
 | `Supr` | Detail Modal | Delete selected application |
 
-### Global Functions
+### Global functions
+
 | Key | Action |
 |-----|--------|
 | `S` | Start scan with plugins |
@@ -62,6 +78,7 @@
 | `Q` | Exit application |
 
 ### Keywords Modal (K)
+
 | Key | Action |
 |-----|--------|
 | `I` | Insert new keyword |
@@ -70,6 +87,7 @@
 | `Esc` | Close modal |
 
 ### Plugins Modal (P)
+
 | Key | Action |
 |-----|--------|
 | `A` | Add plugin (enter .scrapper path) |
@@ -79,86 +97,117 @@
 
 ## CLI Options
 
-### npm Scripts
+### Global installation
+
+Once published, you can install JobTracker as an npm package:
 
 ```bash
-# Development - Full TUI
-npm run dev
+npm install -g sepulvedamarcos-jobtracker
+jobtracker --help
+```
+
+### Global usage
+
+```bash
+# View help
+jobtracker --help
 
 # Auto-scan on start
-npm run dev:find
-
-# Add keyword without entering TUI
-npm run dev:add -- "nodejs"
-
-# Delete keyword without entering TUI
-npm run dev:del -- "nodejs"
-
-# Silent mode (no TUI)
-npm run dev:silent
-
-# Print stored jobs
-npm run print:jobs
-
-# Plugin management
-npm run dev:plugin          # Open TUI with dev plugins mode
-npm run dev:plugin:find     # Plugin + auto-scan
-npm run dev:install-plugin  # Install plugin by path
-```
-
-### Direct Flags
-
-```bash
-# Scan on start
-npx tsx src/infrastructure/adapters/cli/app.tsx --find
+jobtracker --find
 
 # Without splash screen
-npx tsx src/infrastructure/adapters/cli/app.tsx --noSplash
+jobtracker --noSplash
 
 # Add keyword
-npx tsx src/infrastructure/adapters/cli/app.tsx --addKey "backend"
+jobtracker --addKey "python"
 
 # Delete keyword
-npx tsx src/infrastructure/adapters/cli/app.tsx --delKey "backend"
+jobtracker --delKey "python"
 
-# Install plugin
-npx tsx src/infrastructure/adapters/cli/app.tsx --addPlugin "/path/to/plugin.scrapper"
+# Silent mode (scan without TUI)
+jobtracker --silent
 
-# Full help
-npx tsx src/infrastructure/adapters/cli/app.tsx --help
+# Install plugin from .scrapper file
+jobtracker --addPlugin "/path/to/plugin.scrapper"
 ```
 
-## Screenshots
-
-### 1. Splash
-Startup screen showing version and loading status.
-
-![Splash](./images/image_1.png)
-
-### 2. Main Layout
-View of the layout with three panels and shortcuts footer.
-
-![Main Layout](./images/image_2.png)
-
-### 3. Detail Dialog
-Centered modal to add or delete keywords.
-
-![Detail Modal](./images/image_3.png)
-
-## Technical Stack
-
-- **Language**: TypeScript
-
-For detailed architecture, patterns, and technical specifications, see the [SPEC.md](./Spec.en.md) (also available in [Spanish](./SPEC.md)).
-
-## Installation
+### Local installation (development)
 
 ```bash
 npm install
 npm run dev
 ```
 
+### Local usage
+
+```bash
+# Full TUI
+npm run dev
+
+# With auto-scan on start
+npm run dev:find
+
+# Add keyword without entering TUI
+npm run dev:add -- "python"
+
+# Delete keyword without entering TUI
+npm run dev:del -- "python"
+
+# Silent mode (without TUI)
+npm run dev:silent
+
+# Print stored jobs
+npm run print:jobs
+
+# Plugin management (development)
+npm run dev:plugin          # Open TUI with dev plugins mode
+npm run dev:plugin:find     # Plugin + auto-scan
+```
+
+## Plugins
+
+JobTracker is **extensible**. You can add plugins for different job boards.
+
+### Available plugins
+
+- **trabajando.cl** - Chilean job portal with more than 15 sites
+- **computrabajo.cl** - Latin American portal (in development)
+
+### Create your own plugin
+
+JobTracker has a **Plugin SDK** that lets you create scrapers for any job board.
+
+See [plugin-sdk/README.md](./plugin-sdk/README.md) for complete documentation.
+
+```bash
+# Validate plugin structure
+npx tsx plugin-sdk/scripts/validate.ts --name my-plugin
+
+# Compile TypeScript to JavaScript
+npx tsx plugin-sdk/scripts/build.ts --name my-plugin
+
+# Test the plugin
+npx tsx plugin-sdk/scripts/test.ts --name my-plugin --keywords "python,react"
+
+# Package for distribution
+npx tsx plugin-sdk/scripts/pack.ts --name my-plugin
+```
+
+## Technical stack
+
+- **Language**: TypeScript
+- **Runtime**: Node.js
+- **UI**: React + Ink
+- **CLI**: Commander
+- **Paths**: env-paths
+- **Persistence**: local JSON
+- **Scraping**: Playwright
+
+For more details on architecture, patterns, and technical specifications, see [SPEC.md](./SPEC.en.md).
+
 ## Contributing
+
+Contributions are welcome, whether reporting bugs, proposing improvements, or submitting code.
 
 1. Fork the repository
 2. Create a branch (`git checkout -b feature/my-change`)
@@ -170,16 +219,16 @@ npm run dev
 
 <p align="center">
   <a href="https://www.linkedin.com/in/sepulvedamarcos">
-    <img src="https://img.shields.io/badge/LinkedIn-Marcos%20Sep%C3%BAlveda-blue?logo=linkedin&logoColor=white" />
+    <img src="https://img.shields.io/badge/LinkedIn-Marcos%20Sep%C3%BAlveda-blue?logo=linkedin&logoColor=white" alt="LinkedIn" />
   </a>
   <a href="mailto:sepulvedamarcos@gmail.com">
-    <img src="https://img.shields.io/badge/Email-sepulvedamarcos%40gmail.com-red?logo=gmail&logoColor=white" />
+    <img src="https://img.shields.io/badge/Email-sepulvedamarcos%40gmail.com-red?logo=gmail&logoColor=white" alt="Email" />
   </a>
   <a href="https://ko-fi.com/sepulvedamarcos">
-    <img src="https://img.shields.io/badge/Ko--fi-Support%20with%20a%20coffee-ff5e5b?logo=kofi&logoColor=white" />
+    <img src="https://img.shields.io/badge/Ko--fi-Support%20with%20a%20coffee-ff5e5b?logo=kofi&logoColor=white" alt="Ko-fi" />
   </a>
 </p>
 
 ---
 
-Built for people who prefer to automate their job search without giving up control of their data.
+If you like it, consider giving the repository a star.

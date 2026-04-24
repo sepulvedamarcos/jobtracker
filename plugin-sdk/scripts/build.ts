@@ -8,6 +8,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { execSync } from 'child_process';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -59,35 +60,46 @@ async function buildPlugin(name: string, basePath: string): Promise<void> {
     process.exit(1);
   }
   
-  // Compilar con tsc
+  // Compilar usando esbuild via tsx
   console.log('\n📝 Compilando TypeScript...');
   
-  const tscPath = path.join(__dirname, '..', '..', 'node_modules', '.bin', 'tsc');
-  const tsconfigPath = path.join(__dirname, '..', '..', 'tsconfig.json');
-  
-  // Crear tsconfig temporal para solo el plugin
-  const pluginTsconfig = path.join(pluginPath, 'tsconfig.plugin.json');
-  const tsconfigContent = JSON.parse(fs.readFileSync(tsconfigPath, 'utf-8'));
-  tsconfigContent.include = ['scraper.ts'];
-  tsconfigContent.outDir = pluginPath;
-  fs.writeFileSync(pluginTsconfig, JSON.stringify(tsconfigContent, null, 2));
-  
   try {
-    const { execSync } = await import('child_process');
-    execSync(`npx tsc --project "${pluginTsconfig}"`, { 
-      cwd: path.join(__dirname, '..', '..'),
+    // Crear un script temporal que use esbuild
+    const buildScript = `
+import * as esbuild from 'esbuild';
+
+const inputFile = '${tsFile.replace(/\\/g, '\\\\')}';
+const outputFile = '${jsFile.replace(/\\/g, '\\\\')}';
+
+await esbuild.build({
+  entryPoints: [inputFile],
+  outfile: outputFile,
+  platform: 'node',
+  target: 'node18',
+  format: 'esm',
+  bundle: true,
+  external: ['playwright'],
+  sourcemap: false,
+  minify: false,
+});
+
+console.log('✅ Compilación exitosa');
+`;
+    
+    const tmpFile = path.join(pluginPath, '.build-tmp.mjs');
+    fs.writeFileSync(tmpFile, buildScript);
+    
+    execSync(`node "${tmpFile}"`, { 
       stdio: 'inherit' 
     });
     
-    // Limpiar tsconfig temporal
-    fs.unlinkSync(pluginTsconfig);
+    // Limpiar archivo temporal
+    fs.unlinkSync(tmpFile);
     
     // Verificar que se creó el archivo
     if (fs.existsSync(jsFile)) {
-      console.log(`\n✅ Compilación exitosa: ${jsFile}`);
-      
-      // Verificar tamaño
       const stats = fs.statSync(jsFile);
+      console.log(`\n✅ Compilación exitosa: ${jsFile}`);
       console.log(`📊 Tamaño: ${(stats.size / 1024).toFixed(2)} KB`);
     } else {
       console.error('\n❌ Error: No se generó scraper.js');

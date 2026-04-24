@@ -1,0 +1,13 @@
+{
+  "pluginId": "computrabajo-cl",
+  "name": "Computrabajo.cl",
+  "pluginVersion": "1.0.0",
+  "author": "JobTracker",
+  "enabled": true,
+  "mainFile": "scraper.js",
+  "capabilities": {
+    "supportsKeywordSearch": true,
+    "loadsAllResults": true
+  },
+  "notes": "Ver NOTAS.md para limitaciones y documentación"
+}
