@@ -1,0 +1,72 @@
+{
+  "path": "cz-conventional-changelog",
+  "messagePatterns": {
+    "type": {
+      "description": "Select the type of change that you're committing:",
+      "enum": [
+        {
+          "value": "feat",
+          "name": "feat:     A new feature",
+          "emoji": "✨"
+        },
+        {
+          "value": "fix",
+          "name": "fix:      A bug fix",
+          "emoji": "🐛"
+        },
+        {
+          "value": "refactor",
+          "name": "refactor: A code change that neither fixes a bug nor adds a feature",
+          "emoji": "♻️"
+        },
+        {
+          "value": "docs",
+          "name": "docs:     Documentation only changes",
+          "emoji": "📝"
+        },
+        {
+          "value": "chore",
+          "name": "chore:    Changes that don't modify src or test files",
+          "emoji": "🔧"
+        },
+        {
+          "value": "perf",
+          "name": "perf:     A code change that improves performance",
+          "emoji": "⚡️"
+        },
+        {
+          "value": "test",
+          "name": "test:     Adding missing tests or correcting existing tests",
+          "emoji": "✅"
+        },
+        {
+          "value": "build",
+          "name": "build:    Changes that affect the build system or external dependencies",
+          "emoji": "📦️"
+        },
+        {
+          "value": "ci",
+          "name": "ci:       Changes to our CI configuration files and scripts",
+          "emoji": "👷"
+        },
+        {
+          "value": "revert",
+          "name": "revert:   Reverts a previous commit",
+          "emoji": "⏪"
+        }
+      ]
+    },
+    "scope": {
+      "description": "Denote the SCOPE of this change (optional):"
+    },
+    "body": {
+      "description": "Provide a LONGER description of the change (optional). Use | when you want to split into multiple lines."
+    },
+    "breaking": {
+      "description": "List any BREAKING CHANGES. These are changes that will break compatibility with previous versions (optional).|Use 'YES' to add a breaking change line. More information at https://www.conventionalcommits.org."
+    },
+    "issues": {
+      "description": "Add issue references (optional), for example: \"closes #123\", \"fixes #456\"."
+    }
+  }
+}
