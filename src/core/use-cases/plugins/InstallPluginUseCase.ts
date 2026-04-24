@@ -8,6 +8,16 @@ import type { PluginMetadata, PluginCapabilities } from '../../plugins/PluginMet
 
 const execAsync = promisify(exec);
 
+// Log a archivo en .local/share/jobtracker/
+const logInstall = (...args: unknown[]) => {
+  const msg = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
+  const paths = envPaths('jobtracker', { suffix: '' });
+  const logPath = path.join(paths.data, 'install.log');
+  const timestamp = new Date().toISOString();
+  const line = `[${timestamp}] ${msg}\n`;
+  fs.writeFileSync(logPath, line, { flag: 'a' });
+};
+
 export interface InstallPluginResult {
   success: boolean;
   message: string;
@@ -53,6 +63,7 @@ export const installPlugin = async (
 ): Promise<InstallPluginResult> => {
   const paths = envPaths('jobtracker', { suffix: '' });
   const pluginsDir = path.join(paths.data, 'plugins');
+  logInstall('=== NUEVA INSTALACION ===', 'pluginsDir:', pluginsDir);
   
   const getPluginsMetadataPath = () => path.join(pluginsDir, 'PluginsMetadata.json');
   
@@ -73,6 +84,7 @@ export const installPlugin = async (
   };
 
   onProgress?.('Iniciando instalación del plugin...');
+  logInstall('Iniciando:', scrapperPath);
 
   // 1. Validar que el archivo existe y es un .scrapper
   if (!scrapperPath.toLowerCase().endsWith('.scrapper')) {
@@ -164,12 +176,15 @@ export const installPlugin = async (
 
     // 7. Mover a la carpeta final
     const pluginDir = path.join(pluginsDir, pluginData.pluginId);
+    logInstall('Moviendo a:', pluginDir);
     
     if (fs.existsSync(pluginDir)) {
+      logInstall('Directorio ya existe, eliminar y reescribir');
       fs.rmSync(pluginDir, { recursive: true });
     }
     
     fs.renameSync(tempDir, pluginDir);
+    logInstall('Movido OK:', pluginDir);
 
     // 8. Registrar en metadata
     const finalMetadata: PluginMetadata = {
@@ -198,9 +213,11 @@ export const installPlugin = async (
       message: `Plugin ${pluginData.name} instalado correctamente`,
       plugin: finalMetadata,
     };
+    logInstall('FINALIZADO OK:', pluginData.name);
 
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Error desconocido';
+    logInstall('ERROR:', msg);
     return { success: false, message: `Error durante instalación: ${msg}` };
   } finally {
     // Limpiar temporales solo si existen
