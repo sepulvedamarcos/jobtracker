@@ -1,0 +1,18 @@
+{
+  "pluginId": "trabajando-cl",
+  "name": "Trabajando.cl",
+  "pluginVersion": "1.1.0",
+  "author": "JobTracker",
+  "enabled": true,
+  "mainFile": "scraper.js",
+  "capabilities": {
+    "supportsKeywordSearch": true,
+    "loadsAllResults": true
+  },
+  "limitations": {
+    "noPeriodSeparators": "node.js no funciona, usar nodejs",
+    "caseSensitive": "Es case-insensitive pero palabras exactas",
+    "requiresScrollToLoad": "Usa scroll + click para cargar todos los resultados"
+  },
+  "notes": "Ver NOTAS.md para configuración óptima de keywords"
+}

@@ -1,21 +1,37 @@
 {
   "name": "jobtracker",
-  "version": "0.0.1",
-  "description": "",
+  "version": "0.2.1",
+  "description": "TUI para búsqueda y seguimiento de empleo",
   "main": "index.js",
   "scripts": {
     "dev": "clear && tsx --tsconfig tsconfig.json src/infrastructure/adapters/cli/app.tsx",
-    "dev:now": "clear && ts-node src/infrastructure/adapters/cli/app.tsx --now",
-    "dev:silent": "clear && ts-node src/infrastructure/adapters/cli/app.tsx --silent",
-    "dev:add": "clear && ts-node src/infrastructure/adapters/cli/app.tsx --add-keyword",
+    "dev:silent": "clear && tsx src/infrastructure/adapters/cli/app.tsx --silent",
+    "dev:add": "clear && tsx src/infrastructure/adapters/cli/app.tsx --addKey",
+    "dev:del": "clear && tsx src/infrastructure/adapters/cli/app.tsx --delKey",
+    "dev:find": "clear && tsx src/infrastructure/adapters/cli/app.tsx --find",
+    "dev:plugin": "clear && JOBTRACKER_PLUGIN_DEV=true tsx --tsconfig tsconfig.json src/infrastructure/adapters/cli/app.tsx",
+    "dev:plugin:find": "clear && JOBTRACKER_PLUGIN_DEV=true tsx --tsconfig tsconfig.json src/infrastructure/adapters/cli/app.tsx --find",
+    "dev:install-plugin": "clear && tsx src/infrastructure/adapters/cli/app.tsx --addPlugin",
     "print:jobs": "tsx src/scripts/printJobs.ts",
-    "test": "clear && echo \"Error: no test specified\" && exit 1"
+    "analyze": "tsx src/scripts/analyzeCommits.ts",
+    "commit": "cz",
+    "release": "tsx src/scripts/analyzeCommits.ts",
+    "release:minor": "standard-version --release-as minor",
+    "release:major": "standard-version --release-as major",
+    "release:patch": "standard-version --release-as patch",
+    "prepare": "husky"
   },
-  "keywords": [],
+  "keywords": [
+    "job",
+    "tracker",
+    "tui",
+    "employment"
+  ],
   "author": "",
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "adm-zip": "^0.5.17",
     "commander": "^14.0.3",
     "env-paths": "^4.0.0",
     "ink": "^7.0.1",
@@ -23,11 +39,22 @@
     "ink-gradient": "^4.0.0",
     "ink-select-input": "^6.2.0",
     "iron": "^5.0.6",
-    "react": "^19.2.5"
+    "jszip": "^3.10.1",
+    "node-file-dialog": "^1.0.3",
+    "react": "^19.2.5",
+    "unzipper": "^0.12.3"
   },
   "devDependencies": {
+    "@commitlint/cli": "^20.5.0",
+    "@commitlint/config-conventional": "^20.5.0",
     "@types/node": "^25.6.0",
     "@types/react": "^19.2.14",
+    "commitizen": "^4.3.1",
+    "commitlint": "^20.5.0",
+    "cz-conventional-changelog": "^3.3.0",
+    "husky": "^9.1.7",
+    "playwright": "^1.59.1",
+    "standard-version": "9.5.0",
     "tsx": "^4.21.0",
     "typescript": "^6.0.3"
   }

@@ -177,6 +177,12 @@ export class JsonJobRepository implements IJobRepository {
   }
 
   async saveScannedJobs(jobs: Job[]): Promise<void> {
+    // Borrar archivo anterior primero
+    try {
+      await fs.unlink(APP_PATHS.jobs);
+    } catch {
+      // Ignore si no existe
+    }
     await fs.writeFile(APP_PATHS.jobs, JSON.stringify(jobs, null, 2));
   }
 
