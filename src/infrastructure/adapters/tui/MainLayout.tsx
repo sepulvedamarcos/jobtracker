@@ -26,6 +26,7 @@ import {
     deleteKeyword,
     fetchKeywords,
     markJobsAsApplied,
+    filterAppliedJobs,
     openUrl,
 } from '../../../services/index.js';
 import { PanelKey } from './MainLayout/panel-frame.js';
@@ -110,7 +111,9 @@ export const MainLayout = ({ autoScan, jobService, applicationService }: MainLay
 
                 const mappedJobs = jobs.map(mapDomainJobToViewJob);
                 const mappedApplications = applications.map(mapAppliedJobToViewApplication);
-                const jobsWithApplicationBadge = markJobsAsApplied(mappedJobs, applications);
+                // Filtrar jobs ya aplicados
+                const filteredJobs = filterAppliedJobs(mappedJobs, applications);
+                const jobsWithApplicationBadge = markJobsAsApplied(filteredJobs, applications);
 
                 setJobsData(jobsWithApplicationBadge);
                 setApplicationsData(mappedApplications);
@@ -119,9 +122,9 @@ export const MainLayout = ({ autoScan, jobService, applicationService }: MainLay
                 setSelectedJob(jobsWithApplicationBadge[0] ?? null);
                 setSelectedApplication(mappedApplications[0] ?? null);
                 setStatus(
-                    mappedJobs.length === 0
-                        ? 'Bienvenido! Sin datos previos.'
-                        : `Cargados ${mappedJobs.length} avisos y ${mappedApplications.length} postulaciones.`,
+                    filteredJobs.length === 0
+                        ? 'Todos los avisos ya fueron aplicados.'
+                        : `Cargados ${filteredJobs.length} avisos (${mappedJobs.length - filteredJobs.length} ya aplicados) y ${mappedApplications.length} postulaciones.`,
                 );
 
                 if (autoScan) {
