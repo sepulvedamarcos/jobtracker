@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.4](https://github.com/sepulvedamarcos/jobtracker/compare/v0.0.3...v0.0.4) (2026-04-24)
+
+
+### Features
+
+* **plugin:** mejorar scraper trabajando.cl con carga completa de resultados ([99b8282](https://github.com/sepulvedamarcos/jobtracker/commit/99b8282c75ceba4328ac683c29b944518ad5d8ca))
+
 ### [0.0.3](https://github.com/sepulvedamarcos/jobtracker/compare/v0.0.2...v0.0.3) (2026-04-24)
 
 
