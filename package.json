@@ -1,6 +1,6 @@
 {
   "name": "jobtracker",
-  "version": "0.0.4",
+  "version": "0.1.0",
   "description": "TUI para búsqueda y seguimiento de empleo",
   "main": "index.js",
   "scripts": {
@@ -13,8 +13,9 @@
     "dev:plugin:find": "clear && JOBTRACKER_PLUGIN_DEV=true tsx --tsconfig tsconfig.json src/infrastructure/adapters/cli/app.tsx --find",
     "dev:install-plugin": "clear && tsx src/infrastructure/adapters/cli/app.tsx --addPlugin",
     "print:jobs": "tsx src/scripts/printJobs.ts",
+    "analyze": "tsx src/scripts/analyzeCommits.ts",
     "commit": "cz",
-    "release": "standard-version",
+    "release": "tsx src/scripts/analyzeCommits.ts",
     "release:minor": "standard-version --release-as minor",
     "release:major": "standard-version --release-as major",
     "release:patch": "standard-version --release-as patch",
