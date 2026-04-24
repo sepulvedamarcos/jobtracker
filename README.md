@@ -158,6 +158,28 @@ npm install
 npm run dev
 ```
 
+## Plugins
+
+JobTracker es **extensible**. Puedes agregar plugins para diferentes portales de empleo.
+
+### Plugins disponibles
+
+- **trabajando.cl** - Portal chileno de empleos
+
+### Crear tu propio plugin
+
+JobTracker tiene un **Plugin SDK** que te permite crear scrapers para cualquier portal de empleo.
+
+📖 **Ver [plugin-sdk/README.md](./plugin-sdk/README.md)** para文档详情.
+
+```bash
+# Scripts del SDK
+npx tsx plugin-sdk/scripts/validate.ts --name mi-plugin
+npx tsx plugin-sdk/scripts/build.ts --name mi-plugin
+npx tsx plugin-sdk/scripts/test.ts --name mi-plugin --keywords "python,react"
+npx tsx plugin-sdk/scripts/pack.ts --name mi-plugin
+```
+
 ## Contribuir
 
 1. Haz un fork del repositorio
