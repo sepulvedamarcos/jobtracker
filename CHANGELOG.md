@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.3.0](https://github.com/sepulvedamarcos/jobtracker/compare/v0.2.1...v0.3.0) (2026-04-24)
+
+
+### Features
+
+* **plugin:** crear plugin computrabajo-cl ([ef55797](https://github.com/sepulvedamarcos/jobtracker/commit/ef557979d29db41d4b640653c40a3f518185edd8))
+
 ### [0.2.1](https://github.com/sepulvedamarcos/jobtracker/compare/v0.2.0...v0.2.1) (2026-04-24)
 
 ## [0.2.0](https://github.com/sepulvedamarcos/jobtracker/compare/v0.1.1...v0.2.0) (2026-04-24)
