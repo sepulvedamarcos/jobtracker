@@ -1,7 +1,19 @@
 import { AppliedJob } from '../core/entities/Job.js';
 
-const normalizeLink = (value: string): string =>
-    value.trim().replace(/#.*$/, '').replace(/\/$/, '').toLowerCase();
+// Normalizar link para comparación robusta
+// -去掉 trailing slash
+// -quitar fragments (#)
+// -lower case
+// -trim espacios
+const normalizeLink = (value: string): string => {
+    if (!value) return '';
+    return value
+        .trim()
+        .toLowerCase()
+        .replace(/#.*$/, '')  // quitar fragment
+        .replace(/\/$/, '')   // quitar trailing slash
+        .replace(/\s+/g, ' '); // normalizar espacios
+};
 
 export const buildAppliedLinkSet = (applications: AppliedJob[]): Set<string> =>
     new Set(applications.map((application) => normalizeLink(application.link)));
@@ -25,5 +37,12 @@ export const filterAppliedJobs = <T extends { link: string }>(
     applications: AppliedJob[],
 ): T[] => {
     const appliedLinks = buildAppliedLinkSet(applications);
+    // Debug: mostrar links que se comparan
+    /*
+    console.log('[filterAppliedJobs] Links en applications:', 
+        [...appliedLinks].slice(0, 3).map(l => l.substring(0, 50)));
+    console.log('[filterAppliedJobs] Links en jobs:', 
+        jobs.slice(0, 3).map(j => normalizeLink(j.link).substring(0, 50)));
+    */
     return jobs.filter((job) => !appliedLinks.has(normalizeLink(job.link)));
 };
