@@ -3,7 +3,7 @@ import type { PluginScraper, PluginScraperInput } from '../../../core/plugins/Pl
 import type { Job } from '../../../core/entities/Job.js';
 import { chromium } from 'playwright';
 
-const BASE_URL = 'https://www.computrabajo.cl';
+const BASE_URL = 'https://cl.computrabajo.com';
 
 const generateId = () => 
   `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -109,10 +109,11 @@ async function scan(input: PluginScraperInput): Promise<Job[]> {
           .trim()
           .replace(/\.js\b/gi, 'javascript')
           .replace(/\.net\b/gi, 'dotnet')
-          .replace(/\.ts\b/gi, 'typescript');
+          .replace(/\.ts\b/gi, 'typescript')
+          .replace(/\s+/g, '-');
         
-        // Computrabajo usa formato: /trabajo/{keyword}
-        const searchUrl = `${BASE_URL}/trabajo/${encodeURIComponent(normalizedKeyword)}`;
+        // Computrabajo usa formato: /trabajo-de-{keyword}
+        const searchUrl = `${BASE_URL}/trabajo-de-${encodeURIComponent(normalizedKeyword)}`;
         
         onProgress?.(`Navegando a ${searchUrl}...`, progress);
         

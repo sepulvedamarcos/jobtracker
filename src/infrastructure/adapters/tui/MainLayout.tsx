@@ -8,8 +8,11 @@ import { JobList } from './MainLayout/JobList.js';
 import { ApplicationsPanel } from './MainLayout/ApplicationsPanel.js';
 import { DetailPanel } from './MainLayout/DetailPanel.js';
 import { Footer } from './MainLayout/Footer.js';
+import type { Job } from '../../../core/entities/Job.js';
 import { JobService } from '../../../core/use-cases/JobService.js';
 import { ApplicationService } from '../../../core/use-cases/ApplicationService.js';
+import { getScannedJobsUseCase } from '../../../core/use-cases/jobs/GetScannedJobsUseCase.js';
+import { saveScannedJobsUseCase } from '../../../core/use-cases/jobs/SaveScannedJobsUseCase.js';
 import { mapDomainJobToViewJob, mapBackToJob } from './MainLayout/mapper.js';
     import { mapAppliedJobToViewApplication } from './MainLayout/application-mapper.js';
 import { ViewJob } from './MainLayout/view-model.js';
@@ -32,9 +35,9 @@ import {
 import { PanelKey } from './MainLayout/panel-frame.js';
 import { ConfirmScanModal } from './MainLayout/ConfirmScanModal.js';
 import { ScanProgressModal } from './MainLayout/ScanProgressModal.js';
+import { ScanSummaryModal } from './MainLayout/ScanSummaryModal.js';
 import { PluginsModal } from './MainLayout/PluginsModal.js';
-import { runPluginsScanParallel } from '../../../core/use-cases/plugins/RunPluginsScanParallelUseCase.js';
-import { JsonJobRepository } from '../../storage/JsonJobRepository.js';
+import { runScan } from '../../../core/use-cases/plugins/RunScanUseCase.js';
 import { getDevPlugins } from '../../plugins/PluginRegistry.js';
 import { getPluginsDir } from '../../plugins/PluginPathResolver.js';
 import type { PluginMetadata } from '../../../core/plugins/PluginMetadata.js';
@@ -73,8 +76,9 @@ export const MainLayout = ({ autoScan, jobService, applicationService }: MainLay
     const [applicationModalRevision, setApplicationModalRevision] = useState(0);
     const [isConfirmScanOpen, setIsConfirmScanOpen] = useState(false);
     const [isScanProgressOpen, setIsScanProgressOpen] = useState(false);
-    const [scanProgress, setScanProgress] = useState<{ plugin: string; message: string; progress: number } | null>(null);
-    const [scanPluginResults, setScanPluginResults] = useState<{ pluginId: string; count: number; error?: string }[]>([]);
+    const [isScanSummaryOpen, setIsScanSummaryOpen] = useState(false);
+    const [scanProgress, setScanProgress] = useState<{ plugin: string; message: string; progress: number; keyword: string } | null>(null);
+    const [lastScanResult, setLastScanResult] = useState<any>(null);
     const [abortController, setAbortController] = useState<AbortController | null>(null);
 
     const { exit } = useApp();
@@ -203,7 +207,7 @@ export const MainLayout = ({ autoScan, jobService, applicationService }: MainLay
     const jobsPageSize = Math.max(4, stdout.rows - 10);
     const applicationsPageSize = Math.max(4, Math.floor((stdout.rows - 11) / 2));
     const detailHeight = Math.max(8, Math.floor((stdout.rows - 3) * 0.35));
-    const keywordsModalWidth = Math.max(60, Math.floor(stdout.columns * 0.5));
+    const keywordsModalWidth = Math.max(60, Math.floor(stdout.columns * 0.8));
     const keywordsModalHeight = Math.max(18, Math.floor(stdout.rows * 0.5));
     const keywordsModalListLimit = Math.max(4, keywordsModalHeight - 8);
     const applicationDetailModalWidth = Math.max(60, Math.floor(stdout.columns * 0.5));
@@ -720,47 +724,56 @@ export const MainLayout = ({ autoScan, jobService, applicationService }: MainLay
             setStatus('No hay plugins habilitados para escanear.');
             return;
         }
-
+        
         // Limpiar resultados anteriores (UI + archivo)
         setJobsData([]);
-        setScanPluginResults([]);
+        setLastScanResult(null);
         try {
             fs.unlinkSync(APP_PATHS.jobs);
         } catch {}
-
+        
         try {
-            const result = await runPluginsScanParallel(pluginIds, (progress) => {
-                setScanProgress(progress);
+            const result = await runScan(pluginIds, (progress) => {
+                setScanProgress({
+                    plugin: progress.plugin || 'General',
+                    message: progress.message,
+                    progress: progress.progress,
+                    keyword: progress.keyword,
+                });
             }, signal);
-
-            // Guardar resultados por plugin
-            setScanPluginResults(result.pluginResults || []);
-
+        
+            setLastScanResult(result);
+        
             if (result.success && result.jobs.length > 0) {
                 await saveScannedJobs(result.jobs);
                 const repos = await loadScannedJobs();
                 const updatedApplications = await applicationService.fetchAppliedJobs();
                 const mapped = repos.map(mapDomainJobToViewJob);
+                console.log(`[DEBUG] repos: ${repos.length}, mapped: ${mapped.length}`);
                 setJobsData(markJobsAsApplied(mapped, updatedApplications));
                 setStatus(result.message);
             } else {
                 setStatus(result.message || 'Sin resultados.');
             }
+
+            setIsScanProgressOpen(false);
+            setIsScanSummaryOpen(true);
         } catch (err) {
             setStatus('Error en el escaneo.');
-        } finally {
             setIsScanProgressOpen(false);
         }
     };
 
-    const saveScannedJobs = async (jobs: any[]) => {
-        const repository = new JsonJobRepository();
-        await repository.saveScannedJobs(jobs);
+
+
+    const saveScannedJobs = async (jobs: Job[]) => {
+        const result = await saveScannedJobsUseCase(jobs);
+        return result.success ? result.savedCount : 0;
     };
 
     const loadScannedJobs = async () => {
-        const repository = new JsonJobRepository();
-        return repository.getLastScannedJobs();
+        const result = await getScannedJobsUseCase();
+        return result.jobs;
     };
 
     useInput((input, key) => {
@@ -834,7 +847,7 @@ export const MainLayout = ({ autoScan, jobService, applicationService }: MainLay
                     setIsConfirmScanOpen(false);
                     setIsScanProgressOpen(true);
                     setScanProgress({ plugin: 'init', message: 'Iniciando...', progress: 0 });
-                    setScanPluginResults([]);
+                    setLastScanResult(null);
                     setAbortController(new AbortController());
                     void executeScan();
                     return;
@@ -842,15 +855,24 @@ export const MainLayout = ({ autoScan, jobService, applicationService }: MainLay
                 return;
             }
 
-            if (isScanProgressOpen) {
-                if (key.escape) {
-                    abortController?.abort();
-                    setIsScanProgressOpen(false);
-                    setStatus('Escaneo cancelado.');
+                if (isScanProgressOpen) {
+                    if (key.escape) {
+                        abortController?.abort();
+                        setIsScanProgressOpen(false);
+                        setStatus('Escaneo cancelado.');
+                        return;
+                    }
                     return;
                 }
-                return;
-            }
+
+                if (isScanSummaryOpen) {
+                    if (key.escape) {
+                        setIsScanSummaryOpen(false);
+                        return;
+                    }
+                    return;
+                }
+
 
 if (isPluginsModalOpen) {
                 if (key.escape) {
@@ -1040,16 +1062,27 @@ if (isPluginsModalOpen) {
                     keywords={keywords}
                     plugins={pluginsList.map(p => p.pluginId)}
                     currentPlugin={scanProgress?.plugin || ''}
+                    currentKeyword={scanProgress?.keyword || ''}
                     message={scanProgress?.message || ''}
                     progress={scanProgress?.progress || 0}
                     width={keywordsModalWidth}
                     height={keywordsModalHeight}
-                    pluginResults={scanPluginResults}
+                    pluginResults={lastScanResult?.pluginResults || []}
                     onCancel={() => {
                         abortController?.abort();
                         setIsScanProgressOpen(false);
                         setStatus('Escaneo cancelado.');
                     }}
+                />
+            ) : null}
+
+            {isScanSummaryOpen ? (
+                <ScanSummaryModal
+                    isActive
+                    result={lastScanResult}
+                    onClose={() => setIsScanSummaryOpen(false)}
+                    width={keywordsModalWidth}
+                    height={Math.max(15, Math.floor(stdout.rows * 0.4))}
                 />
             ) : null}
 
