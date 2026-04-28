@@ -113,23 +113,28 @@ async function scan(input: PluginScraperInput): Promise<Job[]> {
         const jobLinks = await page.$$('a[href*="/trabajo/"]');
         
         for (const linkEl of jobLinks) {
-          try {
-            const href = await linkEl.evaluate((el: any) => el.href);
-            const titleText = await linkEl.evaluate(el => el.textContent?.trim());
-            
-            if (href && titleText && href.includes('/trabajo/') && titleText.length > 3) {
-              jobs.push({
-                id: generateId(),
-                keyword,
-                title: titleText,
-                company: 'Empresa no especificada',
-                date: 'Hoy',
-                link: href,
-                source: sourceName,
-                scannedAt,
-              });
-            }
-          } catch {
+            try {
+                const href = await linkEl.evaluate((el: any) => el.href);
+                const { titleText, companyText } = await linkEl.evaluate((el: any) => {
+                    const title = el.textContent?.trim();
+                    const companyEl = el.closest('div')?.querySelector('.tag-manager-lead-fichaempresa');
+                    const company = companyEl?.textContent?.trim();
+                    return { titleText: title, companyText: company };
+                });
+                
+                if (href && titleText && href.includes('/trabajo/') && titleText.length > 3) {
+                  jobs.push({
+                    id: generateId(),
+                    keyword,
+                    title: titleText,
+                    company: companyText || 'Empresa no especificada',
+                    date: 'Hoy',
+                    link: href,
+                    source: sourceName,
+                    scannedAt,
+                  });
+                }
+            } catch {
             // Skip jobs con errores de extracción
           }
         }
