@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.3.5](https://github.com/sepulvedamarcos/jobtracker/compare/v0.3.4...v0.3.5) (2026-04-28)
+
+
+### Features
+
+* filtrar jobs ya aplicados ([#12](https://github.com/sepulvedamarcos/jobtracker/issues/12)) ([36c2d0e](https://github.com/sepulvedamarcos/jobtracker/commit/36c2d0e1a00b160b8838d323026df73594e08605))
+* update navigation keys for job panel ([#13](https://github.com/sepulvedamarcos/jobtracker/issues/13)) ([bdae33e](https://github.com/sepulvedamarcos/jobtracker/commit/bdae33e46f3931bdc110580ab9b0afc48a3d7f34))
+
+
+### Bug Fixes
+
+* correct company extraction in scrapers ([d6ef79a](https://github.com/sepulvedamarcos/jobtracker/commit/d6ef79ab845ce1d8fb8d349020b73f5860dd4897))
+* implement ID-based job matching to prevent duplicates on URL change ([4db78d5](https://github.com/sepulvedamarcos/jobtracker/commit/4db78d5e965d684b467405356e83a5837e96d203))
+
 ### [0.3.4](https://github.com/sepulvedamarcos/jobtracker/compare/v0.3.3...v0.3.4) (2026-04-28)
 
 
