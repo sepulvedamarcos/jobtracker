@@ -940,14 +940,19 @@ if (isPluginsModalOpen) {
             void handleOpenSelectedJob();
             return;
         }
-
-        if (key.return && activePanel === 'applications' && !isApplicationDetailModalOpen) {
-            void openApplicationDetailModal();
+        
+        if (key.return && activePanel === 'jobs') {
+            void handleOpenSelectedJob();
             return;
         }
 
-        if (key.return && activePanel === 'jobs') {
+        if (normalizedInput === ' ' && activePanel === 'jobs') {
             void handleApplySelectedJob();
+            return;
+        }
+        
+        if (key.return && activePanel === 'applications' && !isApplicationDetailModalOpen) {
+            void openApplicationDetailModal();
             return;
         }
 
