@@ -6,6 +6,7 @@ interface ScanProgressModalProps {
     keywords: string[];
     plugins: string[];
     currentPlugin: string;
+    currentKeyword: string;
     message: string;
     progress: number; // 0-100
     width: number;
@@ -19,6 +20,7 @@ export const ScanProgressModal = ({
     keywords,
     plugins,
     currentPlugin,
+    currentKeyword,
     message,
     progress,
     width,
@@ -28,7 +30,7 @@ export const ScanProgressModal = ({
     if (!isActive) return null;
 
     // Barra de progreso proporcional al ancho disponible
-    const barWidth = Math.max(20, width - 40);
+    const barWidth = width - 4;
     const filledWidth = Math.floor((progress / 100) * barWidth);
     const emptyWidth = barWidth - filledWidth;
     
@@ -68,7 +70,10 @@ export const ScanProgressModal = ({
                         Plugins: {plugins.join(', ')}
                     </Text>
                     <Text color="cyan">
-                        Keywords: {keywords.length} ({keywords.join(', ')})
+                        Keyword actual: <Text bold color="white">{currentKeyword || '...'}</Text>
+                    </Text>
+                    <Text color="cyan">
+                        Total keywords: {keywords.length}
                     </Text>
                     <Text color="yellow">
                         Plugin actual: {currentPlugin || 'Iniciando...'}

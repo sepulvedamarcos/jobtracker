@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.3.3](https://github.com/sepulvedamarcos/jobtracker/compare/v0.3.2...v0.3.3) (2026-04-28)
+
+
+### Features
+
+* execute plugins sequentially per keyword for better CLI logs ([f10e513](https://github.com/sepulvedamarcos/jobtracker/commit/f10e513b3874e996c794328d4724318bfc99be8c))
+* filtrar jobs aplicados al guardar scan resultados ([66a100f](https://github.com/sepulvedamarcos/jobtracker/commit/66a100f424f45b45a56affa5f359430be783ee8f))
+* filtrar jobs ya aplicados al cargar ([2e5bf76](https://github.com/sepulvedamarcos/jobtracker/commit/2e5bf7635dac21591ead9b8d8b604e1ed9442e53))
+* limpiar jobs existentes ya aplicados al guardar scan ([62423fc](https://github.com/sepulvedamarcos/jobtracker/commit/62423fcade97467eaf33f857938162b617617f1b))
+* refine scan result metrics and counting logic ([c39437c](https://github.com/sepulvedamarcos/jobtracker/commit/c39437c42e7655e041ae45e099e06fd8ee1d842b))
+
+
+### Bug Fixes
+
+* build errors and clean debug logs ([e3b4a7d](https://github.com/sepulvedamarcos/jobtracker/commit/e3b4a7df325c2a70ac71e7c4a2de7a8bf26f4af5))
+* normalizar links para comparar bien ([9c5249f](https://github.com/sepulvedamarcos/jobtracker/commit/9c5249f271dd68ac781e26218c21819aa839ffdb))
+* resolve TUI crash and plugin loading issues ([a2c1402](https://github.com/sepulvedamarcos/jobtracker/commit/a2c1402883829cc8453324d9f86ab53d23448d6d))
+
 ## [0.3.0](https://github.com/sepulvedamarcos/jobtracker/compare/v0.2.1...v0.3.0) (2026-04-24)
 
 
