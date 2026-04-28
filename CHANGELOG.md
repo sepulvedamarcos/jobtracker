@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.3.4](https://github.com/sepulvedamarcos/jobtracker/compare/v0.3.3...v0.3.4) (2026-04-28)
+
+
+### Features
+
+* update navigation keys for job panel ([b09af40](https://github.com/sepulvedamarcos/jobtracker/commit/b09af400df72624afb2485cdb602e1d50163dab2))
+
 ### [0.3.3](https://github.com/sepulvedamarcos/jobtracker/compare/v0.3.2...v0.3.3) (2026-04-28)
 
 
