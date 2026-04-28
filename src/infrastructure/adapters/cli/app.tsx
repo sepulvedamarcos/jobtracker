@@ -11,6 +11,10 @@ import { JobService } from '../../../core/use-cases/JobService.js';
 import { ApplicationService } from '../../../core/use-cases/ApplicationService.js';
 import { addKeyword, readKeywords, removeKeyword } from '../../../services/keywords.js';
 import { installPlugin } from '../../../core/use-cases/plugins/InstallPluginUseCase.js';
+import { deletePlugin } from '../../../core/use-cases/plugins/DeletePluginUseCase.js';
+import { getDevPlugins } from '../../plugins/PluginRegistry.js';
+import { runScan } from '../../../core/use-cases/plugins/RunScanUseCase.js';
+import { saveScannedJobsUseCase } from '../../../core/use-cases/jobs/SaveScannedJobsUseCase.js';
 
 const program = new Command();
 const jobRepository = new JsonJobRepository();
@@ -44,7 +48,7 @@ program
   .option('-s, --silent', 'Ejecutar sin interfaz visual (TUI) y salir al finalizar')
   .option('--noSplash, --nosplash', 'Iniciar directamente en la vista principal sin mostrar el splash')
   .option('-a, --addKey <keyword>, --addkey <keyword>', 'Agregar una keyword y salir')
-  .option('-d, --delKey <keyword>, --delkey <keyword>', 'Eliminar una keyword y salir')
+  .option('--delKey <keyword>, --delkey <keyword>', 'Eliminar una keyword y salir')
   .option('-p, --addPlugin <ruta>, --addplugin <ruta>', 'Instalar un plugin desde ruta .scrapper y salir')
   .option('--delPlugin <pluginId>, --delplugin <pluginId>', 'Eliminar un plugin instalado y salir')
   .action(async (options) => {
@@ -57,8 +61,14 @@ program
     // Eliminar plugin
     if (delPlugin) {
       console.log(`🗑️ Eliminando plugin: ${delPlugin}`);
-      // Acá se implementaría con InstallPluginUseCase o similar
-      console.log(`ℹ️ Función no implementada aún`);
+      const result = await deletePlugin(delPlugin, (msg) => console.log(`  ${msg}`));
+      
+      if (result.success) {
+        console.log(`✅ ${result.message}`);
+      } else {
+        console.log(`❌ ${result.message}`);
+        process.exit(1);
+      }
       process.exit(0);
     }
 
@@ -104,11 +114,61 @@ program
       process.exit(0);
     }
     
-    // CASO 1: Modo Silencioso (Sin TUI)
+    // CASO 1: Modo Silencioso (Sin TUI) - Ejecuta el scan y sale
     if (options.silent) {
       console.log('🚀 Iniciando escaneo silencioso...');
-      // await tuFuncionDeScrapingReal();
-      console.log('✅ Proceso finalizado.');
+      
+      try {
+        // Obtener plugins disponibles
+        const plugins = getDevPlugins();
+        
+        if (plugins.length === 0) {
+          console.log('⚠️ No hay plugins instalados');
+          process.exit(0);
+        }
+        
+        const pluginIds = plugins.map(p => p.pluginId);
+        console.log(`📋 Plugins a ejecutar: ${pluginIds.join(', ')}`);
+        
+        // Ejecutar el scan unificado
+        const result = await runScan(pluginIds, (p) => {
+            console.log(`  ℹ️ [${p.keyword}] ${p.plugin ? p.plugin : 'General'}: ${p.message} (${p.progress}%)`);
+        });
+        
+        if (!result.success) {
+            console.error(`❌ Error: ${result.message}`);
+            process.exit(1);
+        }
+
+        console.log('\n═══════════════════════════════════════════');
+        console.log('📊 RESULTADOS DEL ESCANEO');
+        console.log('═══════════════════════════════════════════');
+        
+        result.pluginResults.forEach(r => {
+            const status = r.error ? `❌ Error: ${r.error}` : `✅ ${r.count} avisos`;
+            console.log(`${r.pluginId.padEnd(20)}: ${status}`);
+        });
+
+        console.log('-------------------------------------------');
+        console.log(`Total bruto encontrado: ${result.totalFound}`);
+        console.log(`Total únicos (filtrados): ${result.jobs.length}`);
+        console.log('═══════════════════════════════════════════');
+        
+        // Guardar resultados
+        if (result.jobs.length > 0) {
+          const saveResult = await saveScannedJobsUseCase(result.jobs);
+          console.log(saveResult.success 
+            ? `💾 Guardados ${saveResult.newSavedCount} nuevos empleos (Filtrados: ${saveResult.newFilteredCount}, Limpiados: ${saveResult.existingRemovedCount})`
+            : '❌ Error al guardar en disco');
+        }
+        
+        console.log('\n✅ Escaneo finalizado.');
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Unknown error';
+        console.error(`❌ Error en escaneo: ${msg}`);
+        process.exit(1);
+      }
+      
       process.exit(0); 
     }
 
