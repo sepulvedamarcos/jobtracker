@@ -784,7 +784,7 @@ export const MainLayout = ({ autoScan, jobService, applicationService }: MainLay
             return;
         }
 
-        const anyModalOpen = isApplicationDetailModalOpen || isKeywordsModalOpen || isPluginsModalOpen || isConfirmScanOpen || isScanProgressOpen;
+        const anyModalOpen = isApplicationDetailModalOpen || isKeywordsModalOpen || isPluginsModalOpen || isConfirmScanOpen || isScanProgressOpen || isScanSummaryOpen;
 
         if (anyModalOpen) {
             if (isApplicationDetailModalOpen) {
@@ -866,10 +866,7 @@ export const MainLayout = ({ autoScan, jobService, applicationService }: MainLay
                 }
 
                 if (isScanSummaryOpen) {
-                    if (key.escape) {
-                        setIsScanSummaryOpen(false);
-                        return;
-                    }
+                    setIsScanSummaryOpen(false);
                     return;
                 }
 

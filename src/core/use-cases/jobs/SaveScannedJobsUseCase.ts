@@ -25,14 +25,15 @@ export const saveScannedJobsUseCase = async (
     const applications = await repository.getAppliedJobs();
     const existingJobs = await repository.getLastScannedJobs();
     
-    const appliedLinks = new Set(applications.map(app => app.link.toLowerCase().trim()));
-    const existingLinks = new Set(existingJobs.map(job => job.link.toLowerCase().trim()));
-    const allLinks = new Set([...appliedLinks, ...existingLinks]);
-    
-    const cleanedExisting = existingJobs.filter(job => !appliedLinks.has(job.link.toLowerCase().trim()));
+    // 1. Limpiar jobs existentes que ya hayan sido postulados (usando match por ID)
+    const cleanedExisting = filterAppliedJobs(existingJobs, applications);
     const existingRemoved = existingJobs.length - cleanedExisting.length;
     
-    const jobsToSave = jobs.filter(job => !allLinks.has(job.link.toLowerCase().trim()));
+    // 2. Filtrar nuevos jobs: no deben estar postulados Y no deben existir ya en la lista de escaneados
+    const existingLinks = new Set(existingJobs.map(job => job.link.toLowerCase().trim()));
+    const jobsNotApplied = filterAppliedJobs(jobs, applications);
+    const jobsToSave = jobsNotApplied.filter(job => !existingLinks.has(job.link.toLowerCase().trim()));
+    
     const newFilteredCount = jobs.length - jobsToSave.length;
     
     const finalJobsToSave = [...cleanedExisting, ...jobsToSave];
