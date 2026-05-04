@@ -205,7 +205,7 @@ export const MainLayout = ({ autoScan, jobService, applicationService }: MainLay
     }, [keywords, selectedKeyword]);
 
     const jobsPageSize = Math.max(4, stdout.rows - 10);
-    const applicationsPageSize = Math.max(4, Math.floor((stdout.rows - 11) / 2));
+    const applicationsPageSize = Math.max(4, Math.floor((stdout.rows - 10) / 2));
     const detailHeight = Math.max(8, Math.floor((stdout.rows - 3) * 0.35));
     const keywordsModalWidth = Math.max(60, Math.floor(stdout.columns * 0.8));
     const keywordsModalHeight = Math.max(18, Math.floor(stdout.rows * 0.5));

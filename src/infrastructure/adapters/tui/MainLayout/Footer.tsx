@@ -15,7 +15,7 @@ export const Footer = () => {
           { keyLabel: 'Enter', description: 'Abrir' },
         ]}
       />
-      <Box flexGrow={1} paddingRight={1} justifyContent="flex-end">
+      <Box flexGrow={1} paddingRight={1} justifyContent="flex-end" flexWrap="nowrap">
         <Text color="black" bold> Q</Text>
         <Text color="black"> Salir</Text>
         <Text color="black"> / Ctrl+C</Text>
