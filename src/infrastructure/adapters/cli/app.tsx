@@ -56,7 +56,7 @@ program
   .option('--delPlugin <pluginId>, --delplugin <pluginId>', 'Eliminar un plugin instalado y salir')
   .option('--listPlugins, --list-plugins', 'Listar plugins instalados')
   .option('--syncPlugins, --sync-plugins', 'Sincronizar plugins con el repositorio')
-  .option('--downloadPlugin <pluginId>, --download-plugin <pluginId>', 'Descargar un plugin específico por su ID')
+  .option('--download-plugin <pluginId>', 'Descargar un plugin específico por su ID')
   .option('--listKeywords, --list-keywords', 'Listar keywords definidas')
   .action(async (options) => {
     const addKey = options.addKey ?? options.addkey;
