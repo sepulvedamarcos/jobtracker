@@ -6,7 +6,10 @@
     "type": "git",
     "url": "https://github.com/sepulvedamarcos/jobtracker"
   },
-  "main": "index.js",
+  "bin": {
+    "jobtracker": "./dist/infrastructure/adapters/cli/app.js"
+  },
+  "main": "./dist/infrastructure/adapters/cli/app.js",
   "scripts": {
     "build": "tsc",
     "dev": "JOBTRACKER_DEV=true tsx src/infrastructure/adapters/cli/app.tsx",
