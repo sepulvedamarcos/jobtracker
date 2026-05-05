@@ -98,7 +98,6 @@ program
       console.log('📋 Plugins instalados:\n');
       
       const localPlugins = getDevPlugins();
-      const { baseUrl } = getPluginRepoUrls();
       
       // Intentar obtener manifest remoto
       const manifestResult = await fetchRemoteManifest((msg) => console.log(`  ${msg}`));
@@ -109,7 +108,7 @@ program
       
       for (const plugin of localPlugins) {
         let status = '✓';
-        let versionInfo = `v${plugin.pluginVersion}`;
+        let statusText = 'Actualizado';
         
         // Comparar con remoto si está disponible
         if (manifestResult.success && manifestResult.availablePlugins) {
@@ -125,15 +124,21 @@ program
             
             if (isNewer) {
               status = '🔄';
-              versionInfo = `v${plugin.pluginVersion} → v${remote.version}`;
+              statusText = `v${plugin.pluginVersion} → v${remote.version} (ejecuta --sync-plugins)`;
+            } else {
+              statusText = `v${plugin.pluginVersion} (actualizado)`;
             }
+          } else {
+            statusText = `v${plugin.pluginVersion}`;
           }
+        } else {
+          statusText = `v${plugin.pluginVersion}`;
         }
         
-        console.log(`  ${status} ${plugin.name} (${plugin.pluginId}) - ${versionInfo}`);
+        console.log(`  ${status} ${plugin.name} - ${statusText}`);
       }
       
-      if (manifestResult.success) {
+      if (manifestResult.success && manifestResult.availablePlugins) {
         const remoteIds = manifestResult.availablePlugins.map(p => p.id);
         const localIds = localPlugins.map(p => p.pluginId);
         const newPlugins = remoteIds.filter(id => !localIds.includes(id));
@@ -142,12 +147,12 @@ program
           console.log('\n📦 Plugins disponibles en repositorio (no instalados):');
           for (const newId of newPlugins) {
             const remote = manifestResult.availablePlugins.find(p => p.id === newId);
-            console.log(`  NEW ${remote?.name} (${newId}) - v${remote?.version}`);
+            console.log(`  ✨ NEW - ${remote?.name} v${remote?.version} (ejecuta --sync-plugins para instalar)`);
           }
         }
       }
       
-      console.log('\nUsa --sync-plugins para actualizar');
+      console.log('\nUsa --sync-plugins para sincronizar');
       process.exit(0);
     }
 
