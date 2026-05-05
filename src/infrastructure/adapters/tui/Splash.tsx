@@ -92,13 +92,14 @@ export const Splash = ({ onFinish }: Props) => {
           await browser.close();
           setChecks(prev => [...prev, { name: 'Playwright', status: 'ok', message: `${browserName} OK` }]);
         } else {
-          setChecks(prev => [...prev, { name: 'Playwright', status: 'error', message: 'Sin browsers' }]);
-          setBlocked(true);
+          // Playwright instalado pero sin browsers - warning, no bloquea
+          setChecks(prev => [...prev, { name: 'Playwright', status: 'warning', message: 'Sin browsers (ejecuta: npx playwright install)' }]);
         }
       } catch (err) {
+        // Playwright no está instalado - solo es un warning, no bloquea la app
         const msg = err instanceof Error ? err.message : 'No disponible';
-        setChecks(prev => [...prev, { name: 'Playwright', status: 'error', message: msg }]);
-        setBlocked(true);
+        setChecks(prev => [...prev, { name: 'Playwright', status: 'warning', message: 'No instalado (scraping no disponible)' }]);
+        // NO bloquear la app - solo es un warning
       }
     };
     
