@@ -2,8 +2,6 @@ name: Release
 
 on:
   push:
-    tags:
-      - 'v*'
     branches:
       - main
 
@@ -15,6 +13,8 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
@@ -30,10 +30,41 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Check for new commits since last tag
+        id: check
+        run: |
+          # Get the latest tag
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          
+          if [ -z "$LAST_TAG" ]; then
+            # No tags exist, use initial version
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "version=bump" >> $GITHUB_OUTPUT
+          else
+            # Check if there are commits since last tag
+            COMMITS=$(git rev-list $LAST_TAG..HEAD --count)
+            if [ "$COMMITS" -gt "0" ]; then
+              echo "has_changes=true" >> $GITHUB_OUTPUT
+              echo "version=bump" >> $GITHUB_OUTPUT
+            else
+              echo "has_changes=false" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+      - name: Create new version tag
+        if: steps.check.outputs.has_changes == 'true'
+        run: |
+          npm version patch
+          git push --follow-tags
+
       - name: Publish to npm
-        run: npm publish --provenance --access public
+        if: steps.check.outputs.has_changes == 'true'
+        run: |
+          TAG_NAME=$(git describe --tags --abbrev=0)
+          npm publish --provenance --access public
 
       - name: Create GitHub Release
+        if: steps.check.outputs.has_changes == 'true'
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
