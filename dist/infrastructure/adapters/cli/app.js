@@ -18,6 +18,7 @@ import { comparePlugins } from '../../../core/use-cases/plugins/ComparePluginsUs
 import { downloadPlugin as downloadPluginFromUseCase } from '../../../core/use-cases/plugins/DownloadPluginUseCase.js';
 import { runScan } from '../../../core/use-cases/plugins/RunScanUseCase.js';
 import { saveScannedJobsUseCase } from '../../../core/use-cases/jobs/SaveScannedJobsUseCase.js';
+import { logger } from '../../logger/Logger.js';
 const program = new Command();
 const jobRepository = new JsonJobRepository();
 const jobService = new JobService(jobRepository);
@@ -52,6 +53,8 @@ program
     .option('--download-plugin <pluginId>', 'Descargar un plugin específico por su ID')
     .option('--listKeywords, --list-keywords', 'Listar keywords definidas')
     .action(async (options) => {
+    const isDev = process.env.JOBTRACKER_DEV === 'true';
+    logger.info('CLI: Action started', { isDev, options: Object.keys(options) });
     const addKey = options.addKey ?? options.addkey;
     const delKey = options.delKey ?? options.delkey;
     const addPlugin = options.addPlugin ?? options.addplugin;
@@ -61,8 +64,13 @@ program
     const syncPluginsFlag = options.syncPlugins ?? options['sync-plugins'];
     const downloadPlugin = options.downloadPlugin ?? options['download-plugin'];
     const listKeywords = options.listKeywords ?? options['list-keywords'];
+    logger.debug('CLI: Parsed flags', {
+        addKey, delKey, addPlugin, deletePluginFlag, noSplash,
+        listPlugins, syncPluginsFlag, downloadPlugin, listKeywords
+    });
     // Eliminar plugin
     if (deletePluginFlag) {
+        logger.info('CLI: delete-plugin flags detected', { pluginId: deletePluginFlag });
         console.log(`🗑️ Eliminando plugin: ${deletePluginFlag}`);
         const result = await deletePlugin(deletePluginFlag, (msg) => console.log(`  ${msg}`));
         if (result.success) {

@@ -13,6 +13,7 @@ export const deletePlugin = async (
   pluginId: string,
   onProgress?: (message: string) => void
 ): Promise<DeletePluginResult> => {
+  // Siempre usar producción para CLI - JOBTRACKER_DEV es solo para scan
   const paths = envPaths('jobtracker', { suffix: '' });
   const pluginsDir = path.join(paths.data, 'plugins');
   
@@ -33,7 +34,7 @@ export const deletePlugin = async (
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(getPluginsMetadataPath(), JSON.stringify(plugs, null, 2));
   };
-  
+
   onProgress?.('Iniciando eliminación del plugin...');
   
   // 1. Verificar que el plugin está instalado
