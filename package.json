@@ -1,6 +1,6 @@
 {
   "name": "jobtracker",
-  "version": "0.3.8",
+  "version": "0.3.9",
   "description": "TUI para búsqueda y seguimiento de empleo",
   "repository": {
     "type": "git",
