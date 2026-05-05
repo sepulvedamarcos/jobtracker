@@ -6,37 +6,13 @@
     "type": "git",
     "url": "https://github.com/sepulvedamarcos/jobtracker"
   },
+  "readme": "README-NPM.md",
   "bin": {
     "jobtracker": "./dist/infrastructure/adapters/cli/app.js"
   },
   "main": "./dist/infrastructure/adapters/cli/app.js",
   "scripts": {
-    "build": "tsc",
-    "dev": "JOBTRACKER_DEV=true tsx src/infrastructure/adapters/cli/app.tsx",
-    "dev:nosp": "JOBTRACKER_DEV=true tsx src/infrastructure/adapters/cli/app.tsx --nosplash",
-    "dev:silent": "JOBTRACKER_DEV=true tsx src/infrastructure/adapters/cli/app.tsx --silent",
-    "dev:add": "JOBTRACKER_DEV=true tsx src/infrastructure/adapters/cli/app.tsx --addKey",
-    "dev:del": "JOBTRACKER_DEV=true tsx src/infrastructure/adapters/cli/app.tsx --delKey",
-    "dev:plugin": "JOBTRACKER_DEV=true tsx src/infrastructure/adapters/cli/app.tsx --addPlugin",
-    "dev:delplugin": "JOBTRACKER_DEV=true tsx src/infrastructure/adapters/cli/app.tsx --delPlugin",
-    "-   separador": "-----------------------------------------------------------------------------------------",
-    "--  separador": "----------------------------------------------------------------------------------------",
-    "start": "tsx src/infrastructure/adapters/cli/app.tsx",
-    "start:nosp": "tsx src/infrastructure/adapters/cli/app.tsx --nosplash",
-    "start:silent": "tsx src/infrastructure/adapters/cli/app.tsx --silent",
-    "start:add": "tsx src/infrastructure/adapters/cli/app.tsx --addKey",
-    "start:del": "tsx src/infrastructure/adapters/cli/app.tsx --delKey",
-    "start:plugin": "tsx src/infrastructure/adapters/cli/app.tsx --addPlugin",
-    "start:delplugin": "tsx src/infrastructure/adapters/cli/app.tsx --delPlugin",
-    "--- separador": "----------------------------------------------------------------------------------------",
-    "print:jobs": "tsx src/scripts/printJobs.ts",
-    "analyze": "tsx src/scripts/analyzeCommits.ts",
-    "commit": "cz",
-    "release": "tsx src/scripts/analyzeCommits.ts",
-    "release:minor": "standard-version --release-as minor",
-    "release:major": "standard-version --release-as major",
-    "release:patch": "standard-version --release-as patch",
-    "prepare": "husky"
+    "build": "tsc"
   },
   "keywords": [
     "job",
@@ -44,7 +20,7 @@
     "tui",
     "employment"
   ],
-  "author": "",
+  "author": "Marcos Sepulveda",
   "license": "ISC",
   "type": "module",
   "dependencies": {
