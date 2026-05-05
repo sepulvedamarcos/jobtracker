@@ -42,12 +42,15 @@ JobTracker follows pragmatic engineering principles:
 
 ### Splash
 Startup screen with version and status indicators.
+![splash](images/image_1.png)
 
 ### Main environment
 Three-panel view with keyboard navigation.
+![environment](images/image_2.png)
 
 ### Keywords dialog
 Modal to manage search keywords.
+![dialog](images/image_3.png)
 
 ## Hotkeys
 
@@ -102,7 +105,7 @@ Modal to manage search keywords.
 Once published, you can install JobTracker as an npm package:
 
 ```bash
-npm install -g sepulvedamarcos-jobtracker
+npm install -g jobtracker
 jobtracker --help
 ```
 
@@ -111,9 +114,6 @@ jobtracker --help
 ```bash
 # View help
 jobtracker --help
-
-# Auto-scan on start
-jobtracker --find
 
 # Without splash screen
 jobtracker --noSplash
@@ -133,6 +133,8 @@ jobtracker --addPlugin "/path/to/plugin.scrapper"
 
 ### Local installation (development)
 
+After cloning the repository, update dependencies and test it with:
+
 ```bash
 npm install
 npm run dev
@@ -144,9 +146,6 @@ npm run dev
 # Full TUI
 npm run dev
 
-# With auto-scan on start
-npm run dev:find
-
 # Add keyword without entering TUI
 npm run dev:add -- "python"
 
@@ -155,13 +154,6 @@ npm run dev:del -- "python"
 
 # Silent mode (without TUI)
 npm run dev:silent
-
-# Print stored jobs
-npm run print:jobs
-
-# Plugin management (development)
-npm run dev:plugin          # Open TUI with dev plugins mode
-npm run dev:plugin:find     # Plugin + auto-scan
 ```
 
 ## Plugins

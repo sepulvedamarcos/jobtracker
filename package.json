@@ -6,7 +6,7 @@
     "type": "git",
     "url": "https://github.com/sepulvedamarcos/jobtracker"
   },
-  "readme": "README-NPM.md",
+  "readme": "README-NPM-en.md",
   "bin": {
     "jobtracker": "./dist/infrastructure/adapters/cli/app.js"
   },

@@ -28,7 +28,6 @@ jobtracker
 | Opción | Descripción |
 |--------|-------------|
 | `--help` | Ver ayuda |
-| `--find` | Ejecutar escaneo automático al iniciar |
 | `--nosplash` | Iniciar sin pantalla de inicio |
 | `--silent` | Modo silencioso (solo escaneo) |
 | `--addKey "palabra"` | Agregar palabra clave |
@@ -57,7 +56,7 @@ npm install -g playwright
 npx playwright install
 ```
 
-Sin playwright, podés usar la app para gestionar avisos y postulaciones manualmente.
+Sin playwright, puedes usar la app para gestionar avisos y postulaciones manualmente.
 
 ## Datos
 
