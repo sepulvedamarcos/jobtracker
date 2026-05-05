@@ -58,7 +58,7 @@ program
     const addKey = options.addKey ?? options.addkey;
     const delKey = options.delKey ?? options.delkey;
     const addPlugin = options.addPlugin ?? options.addplugin;
-    const deletePluginFlag = options['delete-plugin'];
+    const deletePluginFlag = options.deletePlugin ?? options['delete-plugin'];
     const noSplash = options.noSplash ?? options.nosplash;
     const listPlugins = options.listPlugins ?? options['list-plugins'];
     const syncPluginsFlag = options.syncPlugins ?? options['sync-plugins'];
