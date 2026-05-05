@@ -46,7 +46,6 @@ program
   .name('jobtracker')
   .description('TUI para búsqueda de empleos')
   .version(getVersion())
-  .option('-f, --find', 'Escanear de inmediato al iniciar y entrara a la vista principal')
   .option('-s, --silent', 'Ejecutar sin interfaz visual (TUI) y salir al finalizar')
   .option('--noSplash, --nosplash', 'Iniciar directamente en la vista principal sin mostrar el splash')
   .option('-a, --addKey <keyword>, --addkey <keyword>', 'Agregar una keyword y salir')
@@ -293,11 +292,11 @@ program
       process.exit(0); 
     }
 
-    // CASO 2: Modo Normal (Con TUI)
+// CASO 2: Modo Normal (Con TUI)
     // Pasamos el flag 'now' al Root
-  render(
+    render(
       <Root
-        autoScan={options.find}
+        autoScan={false}
         skipSplash={noSplash}
       />,
       { exitOnCtrlC: false },

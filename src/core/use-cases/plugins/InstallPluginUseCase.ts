@@ -5,6 +5,7 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import envPaths from 'env-paths';
 import type { PluginMetadata, PluginCapabilities } from '../../plugins/PluginMetadata.js';
+import { getPluginsDir } from '../../../infrastructure/plugins/PluginPathResolver.js';
 
 const execAsync = promisify(exec);
 
@@ -61,8 +62,8 @@ export const installPlugin = async (
   scrapperPath: string,
   onProgress?: (message: string) => void
 ): Promise<InstallPluginResult> => {
-  const paths = envPaths('jobtracker', { suffix: '' });
-  const pluginsDir = path.join(paths.data, 'plugins');
+  // Usar getPluginsDir para mantener consistencia con el sistema de carga
+  const pluginsDir = getPluginsDir();
   logInstall('=== NUEVA INSTALACION ===', 'pluginsDir:', pluginsDir);
   
   const getPluginsMetadataPath = () => path.join(pluginsDir, 'PluginsMetadata.json');
@@ -215,8 +216,9 @@ export const installPlugin = async (
     };
 
   } catch (err) {
-    const msg = err instanceof Error ? err.message : 'Error desconocido';
-    logInstall('ERROR:', msg);
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error('ERROR durante instalación:', msg);
+    logInstall('ERROR:', msg, err instanceof Error ? err.stack : '');
     return { success: false, message: `Error durante instalación: ${msg}` };
   } finally {
     // Limpiar temporales solo si existen

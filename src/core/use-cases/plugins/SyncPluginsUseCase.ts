@@ -1,10 +1,4 @@
 // src/core/use-cases/plugins/SyncPluginsUseCase.ts
-/**
- * SyncPluginsUseCase
- * Sincroniza plugins locales con el repositorio remoto
- * - Descarga nuevos plugins disponibles
- * - Actualiza plugins que tienen nueva versión
- */
 import fs from 'fs';
 import path from 'path';
 import { exec } from 'child_process';
@@ -13,6 +7,7 @@ import envPaths from 'env-paths';
 import { fetchRemoteManifest, getPluginRepoUrls } from './FetchRemoteManifestUseCase.js';
 import { installPlugin, type InstallPluginResult } from './InstallPluginUseCase.js';
 import type { PluginMetadata } from '../../plugins/PluginMetadata.js';
+import { getPluginsDir } from '../../../infrastructure/plugins/PluginPathResolver.js';
 
 const execAsync = promisify(exec);
 
@@ -33,18 +28,37 @@ export interface SyncResult {
   installed: number;
 }
 
-// Cargar metadata de plugins instalados
+// Cargar metadata de plugins instalados (usa la misma lógica que el app)
 const loadInstalledPluginsMetadata = (): PluginMetadata[] => {
-  const paths = envPaths('jobtracker', { suffix: '' });
-  const metadataPath = path.join(paths.data, 'plugins', 'PluginsMetadata.json');
+  // Usar getPluginsDir que ya considera JOBTRACKER_DEV
+  const pluginsDir = getPluginsDir();
+  const plugins: PluginMetadata[] = [];
   
-  if (!fs.existsSync(metadataPath)) return [];
+  if (!fs.existsSync(pluginsDir)) {
+    return [];
+  }
   
   try {
-    return JSON.parse(fs.readFileSync(metadataPath, 'utf-8'));
+    const entries = fs.readdirSync(pluginsDir, { withFileTypes: true });
+    
+    for (const entry of entries) {
+      if (!entry.isDirectory()) continue;
+      if (entry.name.startsWith('_')) continue;
+      
+      const metadataPath = path.join(pluginsDir, entry.name, 'metadata.json');
+      if (fs.existsSync(metadataPath)) {
+        const metadata = JSON.parse(fs.readFileSync(metadataPath, 'utf-8'));
+        plugins.push({
+          ...metadata,
+          enabled: true,
+        });
+      }
+    }
   } catch {
     return [];
   }
+  
+  return plugins;
 };
 
 // Comparar versiones semver

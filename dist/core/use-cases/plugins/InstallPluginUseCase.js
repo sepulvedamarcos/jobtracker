@@ -4,6 +4,7 @@ import path from 'path';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import envPaths from 'env-paths';
+import { getPluginsDir } from '../../../infrastructure/plugins/PluginPathResolver.js';
 const execAsync = promisify(exec);
 // Log a archivo en .local/share/jobtracker/
 const logInstall = (...args) => {
@@ -35,8 +36,8 @@ const isValidScraperModule = (mod) => {
         typeof m.scan === 'function');
 };
 export const installPlugin = async (scrapperPath, onProgress) => {
-    const paths = envPaths('jobtracker', { suffix: '' });
-    const pluginsDir = path.join(paths.data, 'plugins');
+    // Usar getPluginsDir para mantener consistencia con el sistema de carga
+    const pluginsDir = getPluginsDir();
     logInstall('=== NUEVA INSTALACION ===', 'pluginsDir:', pluginsDir);
     const getPluginsMetadataPath = () => path.join(pluginsDir, 'PluginsMetadata.json');
     const loadPluginsMetadata = () => {
@@ -160,8 +161,9 @@ export const installPlugin = async (scrapperPath, onProgress) => {
         };
     }
     catch (err) {
-        const msg = err instanceof Error ? err.message : 'Error desconocido';
-        logInstall('ERROR:', msg);
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error('ERROR durante instalación:', msg);
+        logInstall('ERROR:', msg, err instanceof Error ? err.stack : '');
         return { success: false, message: `Error durante instalación: ${msg}` };
     }
     finally {
