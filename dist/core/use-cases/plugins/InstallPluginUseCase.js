@@ -112,13 +112,24 @@ export const installPlugin = async (scrapperPath, onProgress) => {
             };
         }
         onProgress?.('Validando scraper.js...');
-        // 5. Validar que scraper.js cumple con el contrato
+        // 5. Validar que scraper.js existe y tiene extensión correcta
+        // NOTA: No hacemos import dinámico porque el scraper puede requerir playwright
+        // que solo está disponible en runtime, no durante instalación
         const scraperPathFull = path.join(tempDir, jsFile);
-        const scraperModule = await import(scraperPathFull);
-        if (!isValidScraperModule(scraperModule)) {
+        // Validación estática: verificar que existe y es un archivo .js
+        const scraperStats = fs.statSync(scraperPathFull);
+        if (!scraperStats.isFile() || !jsFile.endsWith('.js')) {
             return {
                 success: false,
-                message: 'scraper.js no cumple con el contrato (falta sourceName o scan)'
+                message: 'scraper.js no es un archivo JavaScript válido'
+            };
+        }
+        // Opcional: leer primeras líneas para verificar que no esté vacío
+        const scraperContent = fs.readFileSync(scraperPathFull, 'utf-8');
+        if (scraperContent.trim().length === 0) {
+            return {
+                success: false,
+                message: 'scraper.js está vacío'
             };
         }
         // 6. Verificar que no esté ya instalado

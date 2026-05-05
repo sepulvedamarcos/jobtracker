@@ -33,14 +33,11 @@ export interface ComparePluginsResult {
   error?: string;
 }
 
-// Verificar si playwright está disponible
+// Verificar si playwright está disponible (checkeando node_modules)
 const checkPlaywright = (): boolean => {
-  try {
-    require('playwright');
-    return true;
-  } catch {
-    return false;
-  }
+  // Verificar via filesystem ya que require() no funciona bien en ESM
+  const playwrightPath = path.resolve('./node_modules/playwright');
+  return fs.existsSync(playwrightPath);
 };
 
 // Cargar plugins locales usando getPluginsDir

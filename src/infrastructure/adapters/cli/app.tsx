@@ -16,6 +16,7 @@ import { getDevPlugins } from '../../plugins/PluginRegistry.js';
 import { fetchRemoteManifest, getPluginRepoUrls } from '../../../core/use-cases/plugins/FetchRemoteManifestUseCase.js';
 import { syncPlugins } from '../../../core/use-cases/plugins/SyncPluginsUseCase.js';
 import { comparePlugins } from '../../../core/use-cases/plugins/ComparePluginsUseCase.js';
+import { downloadPlugin as downloadPluginFromUseCase } from '../../../core/use-cases/plugins/DownloadPluginUseCase.js';
 import { runScan } from '../../../core/use-cases/plugins/RunScanUseCase.js';
 import { saveScannedJobsUseCase } from '../../../core/use-cases/jobs/SaveScannedJobsUseCase.js';
 
@@ -55,6 +56,7 @@ program
   .option('--delPlugin <pluginId>, --delplugin <pluginId>', 'Eliminar un plugin instalado y salir')
   .option('--listPlugins, --list-plugins', 'Listar plugins instalados')
   .option('--syncPlugins, --sync-plugins', 'Sincronizar plugins con el repositorio')
+  .option('--downloadPlugin <pluginId>, --download-plugin <pluginId>', 'Descargar un plugin específico por su ID')
   .option('--listKeywords, --list-keywords', 'Listar keywords definidas')
   .action(async (options) => {
     const addKey = options.addKey ?? options.addkey;
@@ -64,6 +66,7 @@ program
     const noSplash = options.noSplash ?? options.nosplash;
     const listPlugins = options.listPlugins ?? options['list-plugins'];
     const syncPluginsFlag = options.syncPlugins ?? options['sync-plugins'];
+    const downloadPlugin = options.downloadPlugin ?? options['download-plugin'];
     const listKeywords = options.listKeywords ?? options['list-keywords'];
 
     // Eliminar plugin
@@ -96,7 +99,7 @@ program
 
     // Listar plugins instalados
     if (listPlugins) {
-      console.log('📋 Plugins instalados:\n');
+      console.log('📋 Obteniendo información del repositorio...\n');
       
       const compareResult = await comparePlugins((msg) => console.log(`  ${msg}`));
       
@@ -105,35 +108,48 @@ program
         process.exit(1);
       }
       
-      // Mostrar plugins instalados
+      console.log('─────────────────────────────────────────');
+      console.log('📦 PLUGINS INSTALADOS');
+      console.log('─────────────────────────────────────────');
+      
       if (compareResult.localPlugins.length === 0) {
-        console.log('  No hay plugins instalados');
+        console.log('  (No hay plugins instalados)');
       }
       
       for (const plugin of compareResult.localPlugins) {
-        let status = '✓';
+        const local = plugin.localVersion || '?';
+        const remote = plugin.remoteVersion || '?';
+        
         if (plugin.status === 'installed-outdated') {
-          status = '🔄';
+          console.log(`  🔄 ${plugin.pluginId} v${local} => repo v${remote}`);
+          console.log(`     → Ejecuta --sync-plugins para actualizar`);
+        } else {
+          console.log(`  ✓ ${plugin.pluginId} v${local} => repo v${remote} (actualizado)`);
         }
-        console.log(`  ${status} ${plugin.name} - ${plugin.message}`);
       }
       
-      // Mostrar plugins disponibles no instalados
       if (compareResult.availablePlugins.length > 0) {
-        console.log('\n📦 Plugins disponibles en repositorio (no instalados):');
+        console.log('');
+        console.log('─────────────────────────────────────────');
+        console.log('📥 PLUGINS DISPONIBLES EN REPOSITORIO');
+        console.log('─────────────────────────────────────────');
         for (const plugin of compareResult.availablePlugins) {
-          console.log(`  ✨ NEW - ${plugin.name} - ${plugin.message}`);
+          console.log(`  ✨ ${plugin.pluginId} v${plugin.remoteVersion}`);
         }
       }
+      
+      console.log('');
+      console.log('─────────────────────────────────────────');
       
       // Advertir si playwright no está disponible
       if (!compareResult.playwrightAvailable) {
-        console.log('\n⚠️ ADVERTENCIA: Playwright no está instalado');
-        console.log(`   Los plugins necesitan Playwright para funcionar.`);
-        console.log(`   Ejecuta: ${compareResult.playwrightInstallCommand}`);
+        console.log('⚠️ Playwright no instalado');
+        console.log('   Ejecuta: npm install -g playwright && npx playwright install');
+        console.log('─────────────────────────────────────────');
       }
       
       console.log('\nUsa --sync-plugins para sincronizar');
+      console.log('Usa --download-plugin <id> para descargar uno específico');
       process.exit(0);
     }
 
@@ -176,6 +192,22 @@ program
         console.log(`\n✅ Instalados: ${result.installed}, Actualizados: ${result.updated}`);
       } else {
         console.log(`❌ Error: ${result.errors.join(', ')}`);
+        process.exit(1);
+      }
+      
+      process.exit(0);
+    }
+
+    // Descargar un plugin específico
+    if (downloadPlugin) {
+      console.log(`📥 Descargando plugin: ${downloadPlugin}\n`);
+      
+      const result = await downloadPluginFromUseCase(downloadPlugin, (msg) => console.log(`  ${msg}`));
+      
+      if (result.success) {
+        console.log(`\n✅ ${result.message}`);
+      } else {
+        console.log(`\n❌ ${result.message}`);
         process.exit(1);
       }
       
