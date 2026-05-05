@@ -1,6 +1,6 @@
 {
   "name": "jobtracker",
-  "version": "0.3.18",
+  "version": "0.3.19",
   "description": "TUI para búsqueda y seguimiento de empleo",
   "repository": {
     "type": "git",
@@ -37,7 +37,7 @@
     "release:minor": "standard-version --release-as minor",
     "release:major": "standard-version --release-as major",
     "release:patch": "standard-version --release-as patch",
-    "prepare": "husky"    
+    "prepare": "husky"
   },
   "keywords": [
     "job",
