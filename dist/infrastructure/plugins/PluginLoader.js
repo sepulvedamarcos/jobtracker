@@ -6,7 +6,7 @@ export const loadScraperPlugin = async (pluginId) => {
     if (!fs.existsSync(pluginDir)) {
         throw new Error(`Plugin directory not found: ${pluginDir}`);
     }
-    const isDevMode = process.env.JOBTRACKER_PLUGIN_DEV === 'true';
+    const isDevMode = process.env.JOBTRACKER_DEV === 'true';
     // En modo dev:plugin buscar primero scraper.ts
     if (isDevMode) {
         const tsPath = path.join(pluginDir, 'scraper.ts');

@@ -9,5 +9,5 @@ export const Footer = () => {
                     { keyLabel: 'Tab', description: 'Panel' },
                     { keyLabel: 'PgUp/PgDn', description: 'Page' },
                     { keyLabel: 'Enter', description: 'Abrir' },
-                ] }), _jsxs(Box, { flexGrow: 1, paddingRight: 1, justifyContent: "flex-end", children: [_jsx(Text, { color: "black", bold: true, children: " Q" }), _jsx(Text, { color: "black", children: " Salir" }), _jsx(Text, { color: "black", children: " / Ctrl+C" })] })] }));
+                ] }), _jsx(Box, { flexGrow: 1, paddingRight: 2, justifyContent: "flex-end", flexWrap: "nowrap", width: "auto", children: _jsx(Text, { color: "black", children: "Q Salir  " }) })] }));
 };
