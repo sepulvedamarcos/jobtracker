@@ -1,7 +1,11 @@
 {
   "name": "jobtracker",
-  "version": "0.3.6",
+  "version": "0.3.10",
   "description": "TUI para búsqueda y seguimiento de empleo",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sepulvedamarcos/jobtracker"
+  },
   "main": "index.js",
   "scripts": {
     "build": "tsc",
