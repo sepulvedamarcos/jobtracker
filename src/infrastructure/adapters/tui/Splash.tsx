@@ -60,8 +60,10 @@ export const Splash = ({ onFinish }: Props) => {
     // 3. Verificar playwright (requerido para scraping)
     const checkPlaywright = async () => {
       try {
+        // Intentar importar playwright - si no está, es solo un warning
         // @ts-ignore
-        const { chromium, firefox, webkit } = await import('playwright');
+        const playwrightModule = await import('playwright');
+        const { chromium, firefox, webkit } = playwrightModule;
         
         // Intentar launch con cualquier browser disponible
         let browser = null;
