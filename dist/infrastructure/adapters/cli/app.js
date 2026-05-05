@@ -110,11 +110,24 @@ program
                 console.log(`  ✨ NEW - ${plugin.name} - ${plugin.message}`);
             }
         }
+        // Advertir si playwright no está disponible
+        if (!compareResult.playwrightAvailable) {
+            console.log('\n⚠️ ADVERTENCIA: Playwright no está instalado');
+            console.log(`   Los plugins necesitan Playwright para funcionar.`);
+            console.log(`   Ejecuta: ${compareResult.playwrightInstallCommand}`);
+        }
         console.log('\nUsa --sync-plugins para sincronizar');
         process.exit(0);
     }
     // Sincronizar plugins
     if (syncPluginsFlag) {
+        // Verificar playwright primero
+        const compareResult = await comparePlugins();
+        if (compareResult.success && !compareResult.playwrightAvailable) {
+            console.log('⚠️ ADVERTENCIA: Playwright no está instalado');
+            console.log(`   Los plugins necesitan Playwright para funcionar.`);
+            console.log(`   Ejecuta: ${compareResult.playwrightInstallCommand}\n`);
+        }
         console.log('🔄 Sincronizando plugins...\n');
         const result = await syncPlugins((msg) => console.log(`  ${msg}`));
         if (result.success) {

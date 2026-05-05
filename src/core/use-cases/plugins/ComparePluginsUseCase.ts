@@ -28,8 +28,20 @@ export interface ComparePluginsResult {
   totalInstalled: number;
   totalAvailable: number;
   totalOutdated: number;
+  playwrightAvailable: boolean;
+  playwrightInstallCommand: string;
   error?: string;
 }
+
+// Verificar si playwright está disponible
+const checkPlaywright = (): boolean => {
+  try {
+    require('playwright');
+    return true;
+  } catch {
+    return false;
+  }
+};
 
 // Cargar plugins locales usando getPluginsDir
 const loadLocalPlugins = (): PluginMetadata[] => {
@@ -82,6 +94,8 @@ const compareVersions = (local: string, remote: string): 'newer' | 'older' | 'eq
 export const comparePlugins = async (
   onProgress?: (message: string) => void
 ): Promise<ComparePluginsResult> => {
+  const playwrightAvailable = checkPlaywright();
+  
   const result: ComparePluginsResult = {
     success: false,
     localPlugins: [],
@@ -89,6 +103,8 @@ export const comparePlugins = async (
     totalInstalled: 0,
     totalAvailable: 0,
     totalOutdated: 0,
+    playwrightAvailable,
+    playwrightInstallCommand: 'npm install -g playwright && npx playwright install',
   };
   
   onProgress?.('Cargando plugins locales...');
