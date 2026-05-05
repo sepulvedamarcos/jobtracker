@@ -46,7 +46,7 @@ program
     .option('-a, --addKey <keyword>, --addkey <keyword>', 'Agregar una keyword y salir')
     .option('--delKey <keyword>, --delkey <keyword>', 'Eliminar una keyword y salir')
     .option('-p, --addPlugin <ruta>, --addplugin <ruta>', 'Instalar un plugin desde ruta .scrapper y salir')
-    .option('--delPlugin <pluginId>, --delplugin <pluginId>', 'Eliminar un plugin instalado y salir')
+    .option('--delete-plugin <pluginId>', 'Eliminar un plugin instalado y salir')
     .option('--listPlugins, --list-plugins', 'Listar plugins instalados')
     .option('--syncPlugins, --sync-plugins', 'Sincronizar plugins con el repositorio')
     .option('--download-plugin <pluginId>', 'Descargar un plugin específico por su ID')
@@ -55,16 +55,16 @@ program
     const addKey = options.addKey ?? options.addkey;
     const delKey = options.delKey ?? options.delkey;
     const addPlugin = options.addPlugin ?? options.addplugin;
-    const delPlugin = options.delPlugin ?? options.delplugin;
+    const deletePluginFlag = options['delete-plugin'];
     const noSplash = options.noSplash ?? options.nosplash;
     const listPlugins = options.listPlugins ?? options['list-plugins'];
     const syncPluginsFlag = options.syncPlugins ?? options['sync-plugins'];
     const downloadPlugin = options.downloadPlugin ?? options['download-plugin'];
     const listKeywords = options.listKeywords ?? options['list-keywords'];
     // Eliminar plugin
-    if (delPlugin) {
-        console.log(`🗑️ Eliminando plugin: ${delPlugin}`);
-        const result = await deletePlugin(delPlugin, (msg) => console.log(`  ${msg}`));
+    if (deletePluginFlag) {
+        console.log(`🗑️ Eliminando plugin: ${deletePluginFlag}`);
+        const result = await deletePlugin(deletePluginFlag, (msg) => console.log(`  ${msg}`));
         if (result.success) {
             console.log(`✅ ${result.message}`);
         }
