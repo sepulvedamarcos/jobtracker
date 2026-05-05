@@ -9,6 +9,8 @@ import { JobList } from './MainLayout/JobList.js';
 import { ApplicationsPanel } from './MainLayout/ApplicationsPanel.js';
 import { DetailPanel } from './MainLayout/DetailPanel.js';
 import { Footer } from './MainLayout/Footer.js';
+import { getScannedJobsUseCase } from '../../../core/use-cases/jobs/GetScannedJobsUseCase.js';
+import { saveScannedJobsUseCase } from '../../../core/use-cases/jobs/SaveScannedJobsUseCase.js';
 import { mapDomainJobToViewJob } from './MainLayout/mapper.js';
 import { mapAppliedJobToViewApplication } from './MainLayout/application-mapper.js';
 import { KeywordsModal } from './MainLayout/KeywordsModal.js';
@@ -18,9 +20,9 @@ import { paginateWithLabels } from '../../../services/pagination.js';
 import { addKeyword, deleteKeyword, fetchKeywords, markJobsAsApplied, filterAppliedJobs, openUrl, } from '../../../services/index.js';
 import { ConfirmScanModal } from './MainLayout/ConfirmScanModal.js';
 import { ScanProgressModal } from './MainLayout/ScanProgressModal.js';
+import { ScanSummaryModal } from './MainLayout/ScanSummaryModal.js';
 import { PluginsModal } from './MainLayout/PluginsModal.js';
-import { runPluginsScanParallel } from '../../../core/use-cases/plugins/RunPluginsScanParallelUseCase.js';
-import { JsonJobRepository } from '../../storage/JsonJobRepository.js';
+import { runScan } from '../../../core/use-cases/plugins/RunScanUseCase.js';
 import { getDevPlugins } from '../../plugins/PluginRegistry.js';
 import { getPluginsDir } from '../../plugins/PluginPathResolver.js';
 export const MainLayout = ({ autoScan, jobService, applicationService }) => {
@@ -51,8 +53,9 @@ export const MainLayout = ({ autoScan, jobService, applicationService }) => {
     const [applicationModalRevision, setApplicationModalRevision] = useState(0);
     const [isConfirmScanOpen, setIsConfirmScanOpen] = useState(false);
     const [isScanProgressOpen, setIsScanProgressOpen] = useState(false);
+    const [isScanSummaryOpen, setIsScanSummaryOpen] = useState(false);
     const [scanProgress, setScanProgress] = useState(null);
-    const [scanPluginResults, setScanPluginResults] = useState([]);
+    const [lastScanResult, setLastScanResult] = useState(null);
     const [abortController, setAbortController] = useState(null);
     const { exit } = useApp();
     const { isRawModeSupported, setRawMode } = useStdin();
@@ -158,9 +161,9 @@ export const MainLayout = ({ autoScan, jobService, applicationService }) => {
         }
     }, [keywords, selectedKeyword]);
     const jobsPageSize = Math.max(4, stdout.rows - 10);
-    const applicationsPageSize = Math.max(4, Math.floor((stdout.rows - 11) / 2));
+    const applicationsPageSize = Math.max(4, Math.floor((stdout.rows - 9) / 2));
     const detailHeight = Math.max(8, Math.floor((stdout.rows - 3) * 0.35));
-    const keywordsModalWidth = Math.max(60, Math.floor(stdout.columns * 0.5));
+    const keywordsModalWidth = Math.max(60, Math.floor(stdout.columns * 0.8));
     const keywordsModalHeight = Math.max(18, Math.floor(stdout.rows * 0.5));
     const keywordsModalListLimit = Math.max(4, keywordsModalHeight - 8);
     const applicationDetailModalWidth = Math.max(60, Math.floor(stdout.columns * 0.5));
@@ -583,43 +586,48 @@ export const MainLayout = ({ autoScan, jobService, applicationService }) => {
         }
         // Limpiar resultados anteriores (UI + archivo)
         setJobsData([]);
-        setScanPluginResults([]);
+        setLastScanResult(null);
         try {
             fs.unlinkSync(APP_PATHS.jobs);
         }
         catch { }
         try {
-            const result = await runPluginsScanParallel(pluginIds, (progress) => {
-                setScanProgress(progress);
+            const result = await runScan(pluginIds, (progress) => {
+                setScanProgress({
+                    plugin: progress.plugin || 'General',
+                    message: progress.message,
+                    progress: progress.progress,
+                    keyword: progress.keyword,
+                });
             }, signal);
-            // Guardar resultados por plugin
-            setScanPluginResults(result.pluginResults || []);
+            setLastScanResult(result);
             if (result.success && result.jobs.length > 0) {
                 await saveScannedJobs(result.jobs);
                 const repos = await loadScannedJobs();
                 const updatedApplications = await applicationService.fetchAppliedJobs();
                 const mapped = repos.map(mapDomainJobToViewJob);
+                console.log(`[DEBUG] repos: ${repos.length}, mapped: ${mapped.length}`);
                 setJobsData(markJobsAsApplied(mapped, updatedApplications));
                 setStatus(result.message);
             }
             else {
                 setStatus(result.message || 'Sin resultados.');
             }
+            setIsScanProgressOpen(false);
+            setIsScanSummaryOpen(true);
         }
         catch (err) {
             setStatus('Error en el escaneo.');
-        }
-        finally {
             setIsScanProgressOpen(false);
         }
     };
     const saveScannedJobs = async (jobs) => {
-        const repository = new JsonJobRepository();
-        await repository.saveScannedJobs(jobs);
+        const result = await saveScannedJobsUseCase(jobs);
+        return result.success ? result.newSavedCount : 0;
     };
     const loadScannedJobs = async () => {
-        const repository = new JsonJobRepository();
-        return repository.getLastScannedJobs();
+        const result = await getScannedJobsUseCase();
+        return result.jobs;
     };
     useInput((input, key) => {
         const normalizedInput = input.toLowerCase();
@@ -627,7 +635,7 @@ export const MainLayout = ({ autoScan, jobService, applicationService }) => {
             exit();
             return;
         }
-        const anyModalOpen = isApplicationDetailModalOpen || isKeywordsModalOpen || isPluginsModalOpen || isConfirmScanOpen || isScanProgressOpen;
+        const anyModalOpen = isApplicationDetailModalOpen || isKeywordsModalOpen || isPluginsModalOpen || isConfirmScanOpen || isScanProgressOpen || isScanSummaryOpen;
         if (anyModalOpen) {
             if (isApplicationDetailModalOpen) {
                 if (key.escape) {
@@ -681,8 +689,8 @@ export const MainLayout = ({ autoScan, jobService, applicationService }) => {
                 if (key.return) {
                     setIsConfirmScanOpen(false);
                     setIsScanProgressOpen(true);
-                    setScanProgress({ plugin: 'init', message: 'Iniciando...', progress: 0 });
-                    setScanPluginResults([]);
+                    setScanProgress({ plugin: 'init', message: 'Iniciando...', progress: 0, keyword: '' });
+                    setLastScanResult(null);
                     setAbortController(new AbortController());
                     void executeScan();
                     return;
@@ -696,6 +704,10 @@ export const MainLayout = ({ autoScan, jobService, applicationService }) => {
                     setStatus('Escaneo cancelado.');
                     return;
                 }
+                return;
+            }
+            if (isScanSummaryOpen) {
+                setIsScanSummaryOpen(false);
                 return;
             }
             if (isPluginsModalOpen) {
@@ -755,12 +767,16 @@ export const MainLayout = ({ autoScan, jobService, applicationService }) => {
             void handleOpenSelectedJob();
             return;
         }
-        if (key.return && activePanel === 'applications' && !isApplicationDetailModalOpen) {
-            void openApplicationDetailModal();
+        if (key.return && activePanel === 'jobs') {
+            void handleOpenSelectedJob();
             return;
         }
-        if (key.return && activePanel === 'jobs') {
+        if (normalizedInput === ' ' && activePanel === 'jobs') {
             void handleApplySelectedJob();
+            return;
+        }
+        if (key.return && activePanel === 'applications' && !isApplicationDetailModalOpen) {
+            void openApplicationDetailModal();
             return;
         }
         // Tab para cambiar entre paneles
@@ -793,9 +809,9 @@ export const MainLayout = ({ autoScan, jobService, applicationService }) => {
             }
         }
     });
-    return (_jsxs(Box, { height: stdout.rows, width: stdout.columns, flexDirection: "column", children: [_jsx(Header, { pluginsCount: pluginsList.length, keywordsCount: keywords.length, status: isAutoScanRunning ? 'Escaneo automático en curso...' : status }), _jsxs(Box, { flexDirection: "row", flexGrow: 1, children: [_jsx(JobList, { items: visibleJobs, onHighlight: setSelectedJob, pageLabel: jobsPagination.pageLabel, isActive: activePanel === 'jobs', isFocused: activePanel === 'jobs' && !isKeywordsModalOpen, accentColor: "#ff9800", availableWidth: jobsLabelWidth, itemLimit: jobsPageSize, flexGrow: 1 }), _jsxs(Box, { flexDirection: "column", flexGrow: 1, flexBasis: "50%", children: [_jsx(ApplicationsPanel, { items: visibleApplications, onHighlight: setSelectedApplication, pageLabel: applicationsPagination.pageLabel, isActive: activePanel === 'applications', isFocused: activePanel === 'applications' && !isKeywordsModalOpen, accentColor: "#ff9800", availableWidth: applicationsLabelWidth, itemLimit: applicationsPageSize, flexGrow: 1 }), _jsx(DetailPanel, { job: selectedJob, isActive: activePanel === 'detail', flexBasis: "35%", flexGrow: 0, height: detailHeight })] })] }), isKeywordsModalOpen ? (_jsx(KeywordsModal, { keywords: keywords, selectedKeyword: selectedKeyword, isActive: true, isInsertMode: isKeywordInsertMode, draftKeyword: keywordDraft, listLimit: keywordsModalListLimit, revision: keywordsRevision, width: keywordsModalWidth, height: keywordsModalHeight, onSelectKeyword: setSelectedKeyword })) : null, isConfirmScanOpen ? (_jsx(ConfirmScanModal, { isActive: true, keywords: keywords, width: keywordsModalWidth, height: keywordsModalHeight, onConfirm: () => { }, onCancel: () => setIsConfirmScanOpen(false) })) : null, isScanProgressOpen ? (_jsx(ScanProgressModal, { isActive: true, keywords: keywords, plugins: pluginsList.map(p => p.pluginId), currentPlugin: scanProgress?.plugin || '', message: scanProgress?.message || '', progress: scanProgress?.progress || 0, width: keywordsModalWidth, height: keywordsModalHeight, pluginResults: scanPluginResults, onCancel: () => {
+    return (_jsxs(Box, { height: stdout.rows, width: stdout.columns, flexDirection: "column", children: [_jsx(Header, { pluginsCount: pluginsList.length, keywordsCount: keywords.length, status: isAutoScanRunning ? 'Escaneo automático en curso...' : status }), _jsxs(Box, { flexDirection: "row", flexGrow: 1, children: [_jsx(JobList, { items: visibleJobs, onHighlight: setSelectedJob, pageLabel: jobsPagination.pageLabel, isActive: activePanel === 'jobs', isFocused: activePanel === 'jobs' && !isKeywordsModalOpen, accentColor: "#ff9800", availableWidth: jobsLabelWidth, itemLimit: jobsPageSize, flexGrow: 1 }), _jsxs(Box, { flexDirection: "column", flexGrow: 1, flexBasis: "50%", children: [_jsx(ApplicationsPanel, { items: visibleApplications, onHighlight: setSelectedApplication, pageLabel: applicationsPagination.pageLabel, isActive: activePanel === 'applications', isFocused: activePanel === 'applications' && !isKeywordsModalOpen, accentColor: "#ff9800", availableWidth: applicationsLabelWidth, itemLimit: applicationsPageSize, flexGrow: 1 }), _jsx(DetailPanel, { job: selectedJob, isActive: activePanel === 'detail', flexBasis: "35%", flexGrow: 0, height: detailHeight })] })] }), isKeywordsModalOpen ? (_jsx(KeywordsModal, { keywords: keywords, selectedKeyword: selectedKeyword, isActive: true, isInsertMode: isKeywordInsertMode, draftKeyword: keywordDraft, listLimit: keywordsModalListLimit, revision: keywordsRevision, width: keywordsModalWidth, height: keywordsModalHeight, onSelectKeyword: setSelectedKeyword })) : null, isConfirmScanOpen ? (_jsx(ConfirmScanModal, { isActive: true, keywords: keywords, width: keywordsModalWidth, height: keywordsModalHeight, onConfirm: () => { }, onCancel: () => setIsConfirmScanOpen(false) })) : null, isScanProgressOpen ? (_jsx(ScanProgressModal, { isActive: true, keywords: keywords, plugins: pluginsList.map(p => p.pluginId), currentPlugin: scanProgress?.plugin || '', currentKeyword: scanProgress?.keyword || '', message: scanProgress?.message || '', progress: scanProgress?.progress || 0, width: keywordsModalWidth, height: keywordsModalHeight, pluginResults: lastScanResult?.pluginResults || [], onCancel: () => {
                     abortController?.abort();
                     setIsScanProgressOpen(false);
                     setStatus('Escaneo cancelado.');
-                } })) : null, isPluginsModalOpen ? (_jsx(PluginsModal, { plugins: pluginsList, selectedPlugin: selectedPluginId, isActive: true, isInstallMode: isPluginInstallMode, draftPath: pluginPathDraft, listLimit: keywordsModalListLimit, revision: pluginsRevision, width: keywordsModalWidth, height: keywordsModalHeight, onSelectPlugin: setSelectedPluginId, message: pluginMessage })) : null, isApplicationDetailModalOpen ? (_jsx(ApplicationDetailModal, { application: selectedApplication, isActive: true, width: applicationDetailModalWidth, height: applicationDetailModalHeight, onConfirmDelete: handleDeleteApplication, onCancel: closeApplicationDetailModal })) : null, _jsx(Footer, {})] }));
+                } })) : null, isScanSummaryOpen ? (_jsx(ScanSummaryModal, { isActive: true, result: lastScanResult, onClose: () => setIsScanSummaryOpen(false), width: keywordsModalWidth, height: Math.max(15, Math.floor(stdout.rows * 0.4)) })) : null, isPluginsModalOpen ? (_jsx(PluginsModal, { plugins: pluginsList, selectedPlugin: selectedPluginId, isActive: true, isInstallMode: isPluginInstallMode, draftPath: pluginPathDraft, listLimit: keywordsModalListLimit, revision: pluginsRevision, width: keywordsModalWidth, height: keywordsModalHeight, onSelectPlugin: setSelectedPluginId, message: pluginMessage })) : null, isApplicationDetailModalOpen ? (_jsx(ApplicationDetailModal, { application: selectedApplication, isActive: true, width: applicationDetailModalWidth, height: applicationDetailModalHeight, onConfirmDelete: handleDeleteApplication, onCancel: closeApplicationDetailModal })) : null, _jsx(Footer, {})] }));
 };

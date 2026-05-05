@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.3.6](https://github.com/sepulvedamarcos/jobtracker/compare/v0.3.5...v0.3.6) (2026-05-05)
+
+
+### Bug Fixes
+
+* resolve scan summary modal behavior and implement ID-based job filtering ([29dee43](https://github.com/sepulvedamarcos/jobtracker/commit/29dee43109d63a7cd832df297eb05e7f8ec61bc0))
+* resolve typescript errors blocking release ([8b3396f](https://github.com/sepulvedamarcos/jobtracker/commit/8b3396f75970212592351f5fd953a98af4609c8f))
+
 ### [0.3.5](https://github.com/sepulvedamarcos/jobtracker/compare/v0.3.4...v0.3.5) (2026-04-28)
 
 

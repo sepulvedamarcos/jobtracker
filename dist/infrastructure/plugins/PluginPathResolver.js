@@ -1,11 +1,12 @@
 // src/infrastructure/plugins/PluginPathResolver.ts
 import path from 'path';
 import { APP_PATHS } from '../config/paths.js';
-const isPluginDevMode = process.env.JOBTRACKER_PLUGIN_DEV === 'true';
+const isDev = process.env.JOBTRACKER_DEV === 'true';
 const projectRoot = process.cwd();
-// ÚNICA función que determina la ruta de plugins según el modo
+// JOBTRACKER_DEV busca plugins en ./src/infrastructure/plugins (del proyecto)
+// Producción busca en ~/.local/share/jobtracker/plugins
 export const getPluginsDir = () => {
-    if (isPluginDevMode) {
+    if (isDev) {
         return path.join(projectRoot, 'src/infrastructure/plugins');
     }
     return APP_PATHS.plugins;

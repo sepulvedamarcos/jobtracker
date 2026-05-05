@@ -7,7 +7,7 @@
  */
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
+import { fileURLToPath, pathToFileURL } from 'url';
 import { chromium } from 'playwright';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -46,7 +46,6 @@ function parseArgs() {
 
 async function testPlugin(name: string, basePath: string, keywords: string[]): Promise<void> {
   const pluginPath = path.join(basePath, name);
-  const scraperFile = path.join(pluginPath, 'scraper.ts');
   
   console.log(`\n🧪 Probando plugin: ${name}`);
   console.log(`📁 Ruta: ${pluginPath}`);
@@ -59,19 +58,23 @@ async function testPlugin(name: string, basePath: string, keywords: string[]): P
   }
   
   // Verificar que tiene scraper
-  if (!fs.existsSync(scraperFile)) {
-    console.error(`❌ No existe scraper.ts en: ${scraperFile}`);
+  const scraperTs = path.join(pluginPath, 'scraper.ts');
+  const scraperJs = path.join(pluginPath, 'scraper.js');
+  const scraperFile = fs.existsSync(scraperTs) ? scraperTs : (fs.existsSync(scraperJs) ? scraperJs : null);
+  
+  if (!scraperFile) {
+    console.error(`❌ No existe scraper.ts o scraper.js en: ${pluginPath}`);
     process.exit(1);
   }
+
   
-  // Cargar el scraper dinámicamente
-  console.log('\n📝 Cargando scraper...');
-  
-  let scraperModule: any;
-  try {
-    // Limpiar cache de módulos
-    delete require.cache[require.resolve(scraperFile)];
-    scraperModule = await import(scraperFile);
+    // Cargar el scraper dinámicamente
+    console.log('\n📝 Cargando scraper...');
+    
+    let scraperModule: any;
+    try {
+      scraperModule = await import(pathToFileURL(scraperFile).href);
+
   } catch (err) {
     console.error(`❌ Error al cargar scraper: ${err}`);
     process.exit(1);

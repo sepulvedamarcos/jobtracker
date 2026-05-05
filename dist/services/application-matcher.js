@@ -1,36 +1,44 @@
-// Normalizar link para comparación robusta
-// -去掉 trailing slash
-// -quitar fragments (#)
-// -lower case
-// -trim espacios
-const normalizeLink = (value) => {
-    if (!value)
+/**
+ * Extrae un identificador único del enlace del aviso.
+ * Esto evita falsos positivos cuando cambian los dominios o los slugs de las URLs.
+ */
+const extractJobId = (url) => {
+    if (!url)
         return '';
-    return value
-        .trim()
-        .toLowerCase()
-        .replace(/#.*$/, '') // quitar fragment
-        .replace(/\/$/, '') // quitar trailing slash
-        .replace(/\s+/g, ' '); // normalizar espacios
+    const normalized = url.trim().toLowerCase().replace(/#.*$/, '').replace(/\/$/, '');
+    try {
+        // Computrabajo: El ID es el código hexadecimal al final del slug (ej: D67F9FD13D07559B61373E686DCF3405)
+        if (normalized.includes('computrabajo')) {
+            const parts = normalized.split('/');
+            const lastPart = parts[parts.length - 1];
+            const idMatch = lastPart.match(/([a-f0-9]{32})$/);
+            if (idMatch)
+                return idMatch[1];
+        }
+        // Trabajando: El ID es el número al inicio del segmento final (ej: 6044668-titulo)
+        if (normalized.includes('trabajando')) {
+            const idMatch = normalized.match(/\/trabajo\/(\d+)/);
+            if (idMatch)
+                return idMatch[1];
+        }
+    }
+    catch (e) {
+        // Fallback en caso de error de parsing
+    }
+    // Fallback: devolver la URL normalizada si no se reconoce el patrón
+    return normalized;
 };
-export const buildAppliedLinkSet = (applications) => new Set(applications.map((application) => normalizeLink(application.link)));
+export const buildAppliedLinkSet = (applications) => new Set(applications.map((application) => extractJobId(application.link)));
 // Marcar jobs con "postulación" si ya fueron aplicados
 export const markJobsAsApplied = (jobs, applications) => {
-    const appliedLinks = buildAppliedLinkSet(applications);
+    const appliedIds = buildAppliedLinkSet(applications);
     return jobs.map((job) => ({
         ...job,
-        applicationLabel: appliedLinks.has(normalizeLink(job.link)) ? 'postulación' : '',
+        applicationLabel: appliedIds.has(extractJobId(job.link)) ? 'postulación' : '',
     }));
 };
 // Filtrar jobs que ya fueron aplicados (no mostrar repetidos)
 export const filterAppliedJobs = (jobs, applications) => {
-    const appliedLinks = buildAppliedLinkSet(applications);
-    // Debug: mostrar links que se comparan
-    /*
-    console.log('[filterAppliedJobs] Links en applications:',
-        [...appliedLinks].slice(0, 3).map(l => l.substring(0, 50)));
-    console.log('[filterAppliedJobs] Links en jobs:',
-        jobs.slice(0, 3).map(j => normalizeLink(j.link).substring(0, 50)));
-    */
-    return jobs.filter((job) => !appliedLinks.has(normalizeLink(job.link)));
+    const appliedIds = buildAppliedLinkSet(applications);
+    return jobs.filter((job) => !appliedIds.has(extractJobId(job.link)));
 };
