@@ -4,7 +4,7 @@
   "description": "TUI para búsqueda y seguimiento de empleo",
   "repository": {
     "type": "git",
-    "url": "https://github.com/sepulvedamarcos/JobTracker"
+    "url": "https://github.com/sepulvedamarcos/jobtracker"
   },
   "main": "index.js",
   "scripts": {
