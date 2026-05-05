@@ -4,3 +4,4 @@ export * from './InstallPluginUseCase.js';
 export * from './DeletePluginUseCase.js';
 export * from './FetchRemoteManifestUseCase.js';
 export * from './SyncPluginsUseCase.js';
+export * from './ComparePluginsUseCase.js';

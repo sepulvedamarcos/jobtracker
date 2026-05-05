@@ -15,6 +15,7 @@ import { deletePlugin } from '../../../core/use-cases/plugins/DeletePluginUseCas
 import { getDevPlugins } from '../../plugins/PluginRegistry.js';
 import { fetchRemoteManifest, getPluginRepoUrls } from '../../../core/use-cases/plugins/FetchRemoteManifestUseCase.js';
 import { syncPlugins } from '../../../core/use-cases/plugins/SyncPluginsUseCase.js';
+import { comparePlugins } from '../../../core/use-cases/plugins/ComparePluginsUseCase.js';
 import { runScan } from '../../../core/use-cases/plugins/RunScanUseCase.js';
 import { saveScannedJobsUseCase } from '../../../core/use-cases/jobs/SaveScannedJobsUseCase.js';
 
@@ -97,58 +98,31 @@ program
     if (listPlugins) {
       console.log('📋 Plugins instalados:\n');
       
-      const localPlugins = getDevPlugins();
+      const compareResult = await comparePlugins((msg) => console.log(`  ${msg}`));
       
-      // Intentar obtener manifest remoto
-      const manifestResult = await fetchRemoteManifest((msg) => console.log(`  ${msg}`));
+      if (!compareResult.success) {
+        console.log(`❌ Error: ${compareResult.error}`);
+        process.exit(1);
+      }
       
-      if (localPlugins.length === 0) {
+      // Mostrar plugins instalados
+      if (compareResult.localPlugins.length === 0) {
         console.log('  No hay plugins instalados');
       }
       
-      for (const plugin of localPlugins) {
+      for (const plugin of compareResult.localPlugins) {
         let status = '✓';
-        let statusText = 'Actualizado';
-        
-        // Comparar con remoto si está disponible
-        if (manifestResult.success && manifestResult.availablePlugins) {
-          const remote = manifestResult.availablePlugins.find(p => p.id === plugin.pluginId);
-          if (remote) {
-            const localVer = plugin.pluginVersion.split('.').map(Number);
-            const remoteVer = remote.version.split('.').map(Number);
-            
-            // Comparar versiones
-            const isNewer = remoteVer[0] > localVer[0] || 
-                          (remoteVer[0] === localVer[0] && remoteVer[1] > localVer[1]) ||
-                          (remoteVer[0] === localVer[0] && remoteVer[1] === localVer[1] && remoteVer[2] > localVer[2]);
-            
-            if (isNewer) {
-              status = '🔄';
-              statusText = `v${plugin.pluginVersion} → v${remote.version} (ejecuta --sync-plugins)`;
-            } else {
-              statusText = `v${plugin.pluginVersion} (actualizado)`;
-            }
-          } else {
-            statusText = `v${plugin.pluginVersion}`;
-          }
-        } else {
-          statusText = `v${plugin.pluginVersion}`;
+        if (plugin.status === 'installed-outdated') {
+          status = '🔄';
         }
-        
-        console.log(`  ${status} ${plugin.name} - ${statusText}`);
+        console.log(`  ${status} ${plugin.name} - ${plugin.message}`);
       }
       
-      if (manifestResult.success && manifestResult.availablePlugins) {
-        const remoteIds = manifestResult.availablePlugins.map(p => p.id);
-        const localIds = localPlugins.map(p => p.pluginId);
-        const newPlugins = remoteIds.filter(id => !localIds.includes(id));
-        
-        if (newPlugins.length > 0) {
-          console.log('\n📦 Plugins disponibles en repositorio (no instalados):');
-          for (const newId of newPlugins) {
-            const remote = manifestResult.availablePlugins.find(p => p.id === newId);
-            console.log(`  ✨ NEW - ${remote?.name} v${remote?.version} (ejecuta --sync-plugins para instalar)`);
-          }
+      // Mostrar plugins disponibles no instalados
+      if (compareResult.availablePlugins.length > 0) {
+        console.log('\n📦 Plugins disponibles en repositorio (no instalados):');
+        for (const plugin of compareResult.availablePlugins) {
+          console.log(`  ✨ NEW - ${plugin.name} - ${plugin.message}`);
         }
       }
       
