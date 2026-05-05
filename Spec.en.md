@@ -11,6 +11,28 @@ This document describes the technical foundation and direction of the JobTracker
 
 Build a cross-platform TUI for job search and tracking, with an experience similar to TrabajandoScanner but implemented in **Node.js + TypeScript** and prepared to grow toward other languages or environments.
 
+## Repositories
+
+| Repository | Description |
+|------------|-------------|
+| [jobtracker](https://github.com/sepulvedamarcos/jobtracker) | Main app (TUI) |
+| [jobtracker-plugins](https://github.com/sepulvedamarcos/jobtracker-plugins) | Plugins (manifest.json + .scrapper) |
+
+### jobtracker-plugins
+
+Plugin distribution repository. Contains:
+
+- `manifest.json` — List of available plugins with versions
+- `{plugin-id}.scrapper` — Compiled plugin files
+
+**Download URLs:**
+```
+manifest: https://raw.githubusercontent.com/sepulvedamarcos/jobtracker-plugins/main/manifest.json
+plugin:   https://raw.githubusercontent.com/sepulvedamarcos/jobtracker-plugins/main/{plugin-id}.scrapper
+```
+
+**Local development:** `/home/marcos/Desarrollo/Nodejs/jobtracker-plugins/`
+
 ## Layer Architecture
 
 ### `core`

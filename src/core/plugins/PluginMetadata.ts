@@ -13,4 +13,18 @@ export interface PluginMetadata {
   author: string;
   capabilities?: PluginCapabilities;
   enabled: boolean;
+  // Campos para integración con repositorio remoto
+  source?: 'local' | 'remote';
+  latestVersion?: string;
+  updateAvailable?: boolean;
+  downloadUrl?: string;
+  lastCheck?: string;
+}
+
+// Plugin info desde el manifest remoto (más liviano)
+export interface RemotePluginInfo {
+  id: string;
+  name: string;
+  version: string;
+  description?: string;
 }

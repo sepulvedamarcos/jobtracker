@@ -13,6 +13,8 @@ import { addKeyword, readKeywords, removeKeyword } from '../../../services/keywo
 import { installPlugin } from '../../../core/use-cases/plugins/InstallPluginUseCase.js';
 import { deletePlugin } from '../../../core/use-cases/plugins/DeletePluginUseCase.js';
 import { getDevPlugins } from '../../plugins/PluginRegistry.js';
+import { fetchRemoteManifest, getPluginRepoUrls } from '../../../core/use-cases/plugins/FetchRemoteManifestUseCase.js';
+import { syncPlugins } from '../../../core/use-cases/plugins/SyncPluginsUseCase.js';
 import { runScan } from '../../../core/use-cases/plugins/RunScanUseCase.js';
 import { saveScannedJobsUseCase } from '../../../core/use-cases/jobs/SaveScannedJobsUseCase.js';
 
@@ -51,12 +53,18 @@ program
   .option('--delKey <keyword>, --delkey <keyword>', 'Eliminar una keyword y salir')
   .option('-p, --addPlugin <ruta>, --addplugin <ruta>', 'Instalar un plugin desde ruta .scrapper y salir')
   .option('--delPlugin <pluginId>, --delplugin <pluginId>', 'Eliminar un plugin instalado y salir')
+  .option('--listPlugins, --list-plugins', 'Listar plugins instalados')
+  .option('--syncPlugins, --sync-plugins', 'Sincronizar plugins con el repositorio')
+  .option('--listKeywords, --list-keywords', 'Listar keywords definidas')
   .action(async (options) => {
     const addKey = options.addKey ?? options.addkey;
     const delKey = options.delKey ?? options.delkey;
     const addPlugin = options.addPlugin ?? options.addplugin;
     const delPlugin = options.delPlugin ?? options.delplugin;
     const noSplash = options.noSplash ?? options.nosplash;
+    const listPlugins = options.listPlugins ?? options['list-plugins'];
+    const syncPluginsFlag = options.syncPlugins ?? options['sync-plugins'];
+    const listKeywords = options.listKeywords ?? options['list-keywords'];
 
     // Eliminar plugin
     if (delPlugin) {
@@ -83,6 +91,119 @@ program
         console.log(`❌ ${result.message}`);
         process.exit(1);
       }
+      process.exit(0);
+    }
+
+    // Listar plugins instalados
+    if (listPlugins) {
+      console.log('📋 Plugins instalados:\n');
+      
+      const localPlugins = getDevPlugins();
+      const { baseUrl } = getPluginRepoUrls();
+      
+      // Intentar obtener manifest remoto
+      const manifestResult = await fetchRemoteManifest((msg) => console.log(`  ${msg}`));
+      
+      if (localPlugins.length === 0) {
+        console.log('  No hay plugins instalados');
+      }
+      
+      for (const plugin of localPlugins) {
+        let status = '✓';
+        let versionInfo = `v${plugin.pluginVersion}`;
+        
+        // Comparar con remoto si está disponible
+        if (manifestResult.success && manifestResult.availablePlugins) {
+          const remote = manifestResult.availablePlugins.find(p => p.id === plugin.pluginId);
+          if (remote) {
+            const localVer = plugin.pluginVersion.split('.').map(Number);
+            const remoteVer = remote.version.split('.').map(Number);
+            
+            // Comparar versiones
+            const isNewer = remoteVer[0] > localVer[0] || 
+                          (remoteVer[0] === localVer[0] && remoteVer[1] > localVer[1]) ||
+                          (remoteVer[0] === localVer[0] && remoteVer[1] === localVer[1] && remoteVer[2] > localVer[2]);
+            
+            if (isNewer) {
+              status = '🔄';
+              versionInfo = `v${plugin.pluginVersion} → v${remote.version}`;
+            }
+          }
+        }
+        
+        console.log(`  ${status} ${plugin.name} (${plugin.pluginId}) - ${versionInfo}`);
+      }
+      
+      if (manifestResult.success) {
+        const remoteIds = manifestResult.availablePlugins.map(p => p.id);
+        const localIds = localPlugins.map(p => p.pluginId);
+        const newPlugins = remoteIds.filter(id => !localIds.includes(id));
+        
+        if (newPlugins.length > 0) {
+          console.log('\n📦 Plugins disponibles en repositorio (no instalados):');
+          for (const newId of newPlugins) {
+            const remote = manifestResult.availablePlugins.find(p => p.id === newId);
+            console.log(`  NEW ${remote?.name} (${newId}) - v${remote?.version}`);
+          }
+        }
+      }
+      
+      console.log('\nUsa --sync-plugins para actualizar');
+      process.exit(0);
+    }
+
+    // Sincronizar plugins
+    if (syncPluginsFlag) {
+      console.log('🔄 Sincronizando plugins...\n');
+      
+      const result = await syncPlugins((msg) => console.log(`  ${msg}`));
+      
+      if (result.success) {
+        console.log('\n═══════════════════════════════════════════');
+        console.log('📊 RESUMEN DE SINCRONIZACIÓN');
+        console.log('═══════════════════════════════════════════');
+        
+        for (const sync of result.synced) {
+          if (sync.status === 'new') {
+            console.log(`  ✨ NEW: ${sync.name} v${sync.remoteVersion}`);
+          } else if (sync.status === 'update') {
+            console.log(`  🔄 UPDATE: ${sync.name} v${sync.localVersion} → v${sync.remoteVersion}`);
+          } else {
+            console.log(`  ✓ OK: ${sync.name} v${sync.localVersion}`);
+          }
+        }
+        
+        if (result.errors.length > 0) {
+          console.log('\n⚠️ Errores:');
+          for (const err of result.errors) {
+            console.log(`  - ${err}`);
+          }
+        }
+        
+        console.log(`\n✅ Instalados: ${result.installed}, Actualizados: ${result.updated}`);
+      } else {
+        console.log(`❌ Error: ${result.errors.join(', ')}`);
+        process.exit(1);
+      }
+      
+      process.exit(0);
+    }
+
+    // Listar keywords
+    if (listKeywords) {
+      console.log('🔑 Keywords definidas:\n');
+      
+      const keywords = await readKeywords();
+      
+      if (keywords.length === 0) {
+        console.log('  No hay keywords definidas');
+      } else {
+        for (const kw of keywords) {
+          console.log(`  - ${kw}`);
+        }
+      }
+      
+      console.log(`\nTotal: ${keywords.length} keywords`);
       process.exit(0);
     }
 
