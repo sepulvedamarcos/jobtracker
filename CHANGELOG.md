@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.4.8](https://github.com/sepulvedamarcos/jobtracker/compare/v0.4.7...v0.4.8) (2026-05-06)
+
+
+### Bug Fixes
+
+* show 'current → latest' format in update message ([6dab575](https://github.com/sepulvedamarcos/jobtracker/commit/6dab575cad73261dfbac3cdc9478f2c312dd8f9f))
+
 ### [0.4.7](https://github.com/sepulvedamarcos/jobtracker/compare/v0.4.6...v0.4.7) (2026-05-06)
 
 
