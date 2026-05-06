@@ -25,7 +25,7 @@ export const Header = ({ pluginsCount, keywordsCount, status, updateInfo }: Head
         </Gradient>
         <Text color="gray"> v{getVersion()}</Text>
         {updateInfo?.hasUpdate && (
-          <Text color="yellow"> → v{updateInfo.latest}</Text>
+          <Text color="yellow"> v{updateInfo.latest} → v{updateInfo.current}</Text>
         )}
       </Box>
 
