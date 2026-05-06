@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.4.5](https://github.com/sepulvedamarcos/jobtracker/compare/v0.4.4...v0.4.5) (2026-05-06)
+
+
+### Bug Fixes
+
+* swap version display order in header ([0860fd6](https://github.com/sepulvedamarcos/jobtracker/commit/0860fd67cfeb6932453d00cc208dd6e0857c7743))
+
 ### [0.4.4](https://github.com/sepulvedamarcos/jobtracker/compare/v0.4.3...v0.4.4) (2026-05-06)
 
 
