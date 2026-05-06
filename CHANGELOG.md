@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.3.30](https://github.com/sepulvedamarcos/jobtracker/compare/v0.3.29...v0.3.30) (2026-05-06)
+
+
+### Features
+
+* **plugins modal**: show installed and available plugins from repository with version indicators
+* **plugins modal**: add Enter key to select plugin before download
+* **plugins modal**: add visual indicator (▸) for selected plugin
+* **plugins modal**: add D key to download from repository, S to sync installed
+* **cli**: add --download-plugin command to download specific plugin
+* **cli**: rename --delPlugin to --delete-plugin
+* **logger**: add logging system for debugging TUI issues
+
+### Bug Fixes
+
+* **cli**: fix delete-plugin option parsing (add fallback for kebab-case)
+* **tui**: fix plugin selection being reset when navigating available plugins
+* **install**: move playwright to dependencies (was in devDependencies)
+
 ### [0.3.6](https://github.com/sepulvedamarcos/jobtracker/compare/v0.3.5...v0.3.6) (2026-05-05)
 
 

@@ -38,7 +38,9 @@ import { ScanProgressModal } from './MainLayout/ScanProgressModal.js';
 import { ScanSummaryModal } from './MainLayout/ScanSummaryModal.js';
 import { PluginsModal } from './MainLayout/PluginsModal.js';
 import { runScan } from '../../../core/use-cases/plugins/RunScanUseCase.js';
+import { comparePlugins, type PluginCompareInfo } from '../../../core/use-cases/plugins/ComparePluginsUseCase.js';
 import { getDevPlugins } from '../../plugins/PluginRegistry.js';
+import { logger } from '../../logger/Logger.js';
 import { getPluginsDir } from '../../plugins/PluginPathResolver.js';
 import type { PluginMetadata } from '../../../core/plugins/PluginMetadata.js';
 
@@ -58,6 +60,8 @@ export const MainLayout = ({ autoScan, jobService, applicationService }: MainLay
     const [activePanel, setActivePanel] = useState<PanelKey>('jobs');
     const [status, setStatus] = useState('Cargando avisos locales...');
     const [pluginsList, setPluginsList] = useState<PluginMetadata[]>([]);
+    const [pluginCompareInfo, setPluginCompareInfo] = useState<PluginCompareInfo[]>([]);
+    const [pluginAvailableInfo, setPluginAvailableInfo] = useState<PluginCompareInfo[]>([]);
     const [selectedPluginId, setSelectedPluginId] = useState<string | null>(null);
     const [isPluginsModalOpen, setIsPluginsModalOpen] = useState(false);
     const [isPluginInstallMode, setIsPluginInstallMode] = useState(false);
@@ -174,18 +178,21 @@ export const MainLayout = ({ autoScan, jobService, applicationService }: MainLay
         const reloadPlugins = () => {
             const loaded = getDevPlugins();
             setPluginsList(loaded);
-            if (loaded.length > 0) {
-                // Mantener el seleccionado actual o seleccionar el primero
-                if (!selectedPluginId || !loaded.find(p => p.pluginId === selectedPluginId)) {
+            // Solo resetear si el seleccionado no está en instalados NI en disponibles
+            const isInInstalled = loaded.some(p => p.pluginId === selectedPluginId);
+            const isInAvailable = pluginAvailableInfo.some(p => p.pluginId === selectedPluginId);
+            
+            if (!selectedPluginId || (!isInInstalled && !isInAvailable)) {
+                if (loaded.length > 0) {
                     setSelectedPluginId(loaded[0].pluginId);
+                } else {
+                    setSelectedPluginId(null);
                 }
-            } else {
-                setSelectedPluginId(null);
             }
         };
         
         reloadPlugins();
-    }, [selectedPluginId]); // Se ejecuta al iniciar y cuando selectedPluginId cambia
+    }, [selectedPluginId, pluginAvailableInfo]); // Se ejecuta al iniciar y cuando selectedPluginId o disponibles cambian
 
     useEffect(() => {
         if (keywords.length === 0) {
@@ -350,7 +357,7 @@ export const MainLayout = ({ autoScan, jobService, applicationService }: MainLay
         }
     };
 
-    const openPluginsModal = () => {
+    const openPluginsModal = async () => {
         setPreviousPanel(activePanel);
         setIsPluginsModalOpen(true);
         setIsPluginInstallMode(false);
@@ -360,6 +367,18 @@ export const MainLayout = ({ autoScan, jobService, applicationService }: MainLay
         // Siempre recargar la lista al abrir el modal
         const loaded = getDevPlugins();
         setPluginsList(loaded);
+        
+        // Obtener comparación con repositorio
+        try {
+            const compareResult = await comparePlugins();
+            if (compareResult.success) {
+                setPluginCompareInfo(compareResult.localPlugins);
+                setPluginAvailableInfo(compareResult.availablePlugins);
+            }
+        } catch (e) {
+            console.error('Error comparing plugins:', e);
+        }
+        
         if (loaded.length > 0) {
             if (!selectedPluginId || !loaded.find(p => p.pluginId === selectedPluginId)) {
                 setSelectedPluginId(loaded[0].pluginId);
@@ -908,6 +927,72 @@ if (isPluginsModalOpen) {
                     return;
                 }
 
+// D - download plugin (disponible en repo)
+                if (normalizedInput === 'd' && selectedPluginId) {
+                    // Verificar si está en los disponibles (no instalados)
+                    const isAvailable = pluginAvailableInfo.some(p => p.pluginId === selectedPluginId);
+                    
+                    logger.debug('TUI: D key pressed', { 
+                        selectedPluginId, 
+                        isAvailable,
+                        availableIds: pluginAvailableInfo.map(p => p.pluginId)
+                    });
+                    
+                    if (isAvailable) {
+                        setPluginMessage(`Descargando ${selectedPluginId}...`);
+                        void (async () => {
+                            try {
+                                const { downloadPlugin } = await import('../../../core/use-cases/plugins/DownloadPluginUseCase.js');
+                                const result = await downloadPlugin(selectedPluginId, (msg) => setPluginMessage(msg));
+                                if (result.success) {
+                                    setPluginMessage(result.message);
+                                    // Recargar
+                                    const loaded = getDevPlugins();
+                                    setPluginsList(loaded);
+                                    const compareResult = await comparePlugins();
+                                    if (compareResult.success) {
+                                        setPluginCompareInfo(compareResult.localPlugins);
+                                        setPluginAvailableInfo(compareResult.availablePlugins);
+                                    }
+                                } else {
+                                    setPluginMessage(`Error: ${result.message}`);
+                                }
+                            } catch (e) {
+                                setPluginMessage(`Error: ${e}`);
+                            }
+                        })();
+                    } else {
+                        setPluginMessage('Ya instalado. Usa S para sync o selecciona uno disponible.');
+                    }
+                    return;
+                }
+
+                // S - sync plugins
+                if (normalizedInput === 's') {
+                    setPluginMessage('Sincronizando plugins...');
+                    void (async () => {
+                        try {
+                            const { syncPlugins } = await import('../../../core/use-cases/plugins/SyncPluginsUseCase.js');
+                            const result = await syncPlugins((msg) => setPluginMessage(msg));
+                            if (result.success) {
+                                setPluginMessage(`Sincronizados: ${result.installed} nuevos, ${result.updated} actualizados`);
+                                // Recargar plugins
+                                const loaded = getDevPlugins();
+                                setPluginsList(loaded);
+                                const compareResult = await comparePlugins();
+                                if (compareResult.success) {
+                                    setPluginCompareInfo(compareResult.localPlugins);
+                                }
+                            } else {
+                                setPluginMessage(`Error: ${result.errors.join(', ')}`);
+                            }
+                        } catch (e) {
+                            setPluginMessage(`Error: ${e}`);
+                        }
+                    })();
+                    return;
+                }
+
                 return;
             }
 
@@ -1101,6 +1186,54 @@ if (isPluginsModalOpen) {
                     height={keywordsModalHeight}
                     onSelectPlugin={setSelectedPluginId}
                     message={pluginMessage}
+                    pluginCompareInfo={pluginCompareInfo}
+                    pluginAvailableInfo={pluginAvailableInfo}
+                    onDownloadPlugin={async (pluginId: string) => {
+                        setPluginMessage(`Descargando ${pluginId}...`);
+                        try {
+                            const { downloadPlugin } = await import('../../../core/use-cases/plugins/DownloadPluginUseCase.js');
+                            const result = await downloadPlugin(pluginId, (msg) => setPluginMessage(msg));
+                            if (result.success) {
+                                setPluginMessage(result.message);
+                                // Recargar plugins
+                                const loaded = getDevPlugins();
+                                setPluginsList(loaded);
+                                const compareResult = await comparePlugins();
+                                if (compareResult.success) {
+                                    setPluginCompareInfo(compareResult.localPlugins);
+                                    setPluginAvailableInfo(compareResult.availablePlugins);
+                                }
+                            } else {
+                                setPluginMessage(`Error: ${result.message}`);
+                            }
+                        } catch (e) {
+                            setPluginMessage(`Error: ${e}`);
+                        }
+                    }}
+                    onSyncPlugins={async () => {
+                        // Implementar sync desde TUI
+                        setPluginMessage('Sincronizando plugins...');
+                        try {
+                            // Importar syncPlugins dinámicamente para evitar errores de imports
+                            const { syncPlugins } = await import('../../../core/use-cases/plugins/SyncPluginsUseCase.js');
+                            const result = await syncPlugins((msg) => console.log(`  ${msg}`));
+                            if (result.success) {
+                                setPluginMessage(`Sincronizados: ${result.installed} nuevos, ${result.updated} actualizados`);
+                                // Recargar plugins
+                                const loaded = getDevPlugins();
+                                setPluginsList(loaded);
+                                const compareResult = await comparePlugins();
+                                if (compareResult.success) {
+                                    setPluginCompareInfo(compareResult.localPlugins);
+                                    setPluginAvailableInfo(compareResult.availablePlugins);
+                                }
+                            } else {
+                                setPluginMessage(`Error: ${result.errors.join(', ')}`);
+                            }
+                        } catch (e) {
+                            setPluginMessage(`Error: ${e}`);
+                        }
+                    }}
                 />
             ) : null}
 

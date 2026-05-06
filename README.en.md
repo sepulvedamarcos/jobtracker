@@ -93,10 +93,15 @@ Modal to manage search keywords.
 
 | Key | Action |
 |-----|--------|
-| `A` | Add plugin (enter .scrapper path) |
+| `↑` / `↓` | Navigate installed and available plugins |
+| `Enter` | Select plugin (required to download) |
+| `A` | Add plugin from local path (.scrapper) |
+| `D` | Download selected plugin from repository |
 | `E` | Delete selected plugin |
-| `Enter` | Install plugin (in install mode) |
+| `S` | Sync installed plugins (update if new version) |
 | `Esc` | Close modal |
+
+**Indicator**: `▸` marks the selected plugin
 
 ## CLI Options
 
@@ -127,8 +132,17 @@ jobtracker --delKey "python"
 # Silent mode (scan without TUI)
 jobtracker --silent
 
-# Install plugin from .scrapper file
-jobtracker --addPlugin "/path/to/plugin.scrapper"
+# List installed and available plugins
+jobtracker --list-plugins
+
+# Sync plugins (update installed ones)
+jobtracker --sync-plugins
+
+# Download specific plugin from repository
+jobtracker --download-plugin workingcl
+
+# Delete installed plugin
+jobtracker --delete-plugin workingcl
 ```
 
 ### Local installation (development)

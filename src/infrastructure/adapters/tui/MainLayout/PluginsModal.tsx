@@ -3,6 +3,35 @@ import { Box, Text } from 'ink';
 import SelectInput from 'ink-select-input';
 import { getPanelFrameProps } from './panel-frame.js';
 import { ShortcutBar } from './ShortcutBar.js';
+import { logger } from '../../../../infrastructure/logger/Logger.js';
+
+// Tipos para comparación de plugins
+interface PluginCompareInfo {
+    pluginId: string;
+    name: string;
+    localVersion?: string;
+    remoteVersion?: string;
+    status: 'installed-up-to-date' | 'installed-outdated' | 'available-not-installed';
+    message: string;
+}
+
+interface PluginsModalProps {
+    plugins: PluginMetadata[];
+    selectedPlugin: string | null;
+    isActive: boolean;
+    isInstallMode: boolean;
+    draftPath: string;
+    listLimit: number;
+    revision: number;
+    width: number;
+    height: number;
+    onSelectPlugin: (pluginId: string) => void;
+    message?: string;
+    pluginCompareInfo?: PluginCompareInfo[];
+    pluginAvailableInfo?: PluginCompareInfo[];
+    onDownloadPlugin?: (pluginId: string) => void;
+    onSyncPlugins?: () => void;
+}
 
 // Inline types para evitar problemas de importación
 interface PluginMetadata {
@@ -31,6 +60,8 @@ interface PluginsModalProps {
     height: number;
     onSelectPlugin: (pluginId: string) => void;
     message?: string;
+    pluginCompareInfo?: PluginCompareInfo[];
+    onSyncPlugins?: () => void;
 }
 
 export const PluginsModal = ({
@@ -45,11 +76,59 @@ export const PluginsModal = ({
     height,
     onSelectPlugin,
     message,
+    pluginCompareInfo = [],
+    pluginAvailableInfo = [],
+    onDownloadPlugin,
+    onSyncPlugins,
 }: PluginsModalProps) => {
-    const items = plugins.map((plugin) => ({
-        label: `${plugin.name} (${plugin.pluginId})`,
-        value: plugin.pluginId,
-    }));
+    // Función para obtener info de comparación de un plugin
+    const getPluginCompare = (pluginId: string): PluginCompareInfo | undefined => {
+        return pluginCompareInfo.find(p => p.pluginId === pluginId);
+    };
+    
+    // Plugins instalados
+    const installedItems = plugins.map((plugin) => {
+        const compare = getPluginCompare(plugin.pluginId);
+        let statusIcon = '✓';
+        let versionLabel = `v${plugin.pluginVersion}`;
+        
+        if (compare) {
+            if (compare.status === 'installed-outdated') {
+                statusIcon = '🔄';
+                versionLabel = `v${compare.localVersion} → v${compare.remoteVersion}`;
+            } else if (compare.status === 'installed-up-to-date') {
+                versionLabel = `v${compare.localVersion}`;
+            }
+        }
+        
+        const isSelected = selectedPlugin === plugin.pluginId;
+        const selectIcon = isSelected ? '▸ ' : '  ';
+        
+        return {
+            label: `${selectIcon}${statusIcon} ${plugin.name} (${versionLabel})`,
+            value: plugin.pluginId,
+        };
+    });
+
+    // Plugins disponibles en repo (no instalados)
+    const availableItems = pluginAvailableInfo.map((plugin) => {
+        const isSelected = selectedPlugin === plugin.pluginId;
+        const selectIcon = isSelected ? '▸ ' : '  ';
+        
+        return {
+            label: `${selectIcon}✨ ${plugin.name} v${plugin.remoteVersion}`,
+            value: plugin.pluginId,
+        };
+    });
+
+    // Combinar ambos con separador
+    const items = [
+        ...installedItems,
+        ...(availableItems.length > 0 ? [{ label: '--- disponibles ---', value: '__divider__' }] : []),
+        ...availableItems,
+    ];
+
+    const outdatedCount = pluginCompareInfo.filter(p => p.status === 'installed-outdated').length;
 
     return (
         <Box
@@ -73,10 +152,12 @@ export const PluginsModal = ({
             >
                 <Box justifyContent="space-between">
                     <Text underline color={isActive ? 'cyan' : 'white'}>
-                        Plugins
+                        Plugins ▸ = seleccionado
                     </Text>
                     <Text color="gray">
-                        {plugins.length} instalados {selectedPlugin ? `| Seleccionado: ${selectedPlugin}` : ''}
+                        {plugins.length} inst
+                        {outdatedCount > 0 && <Text color="yellow"> ({outdatedCount} acts)</Text>}
+                        {pluginAvailableInfo.length > 0 && <Text color="cyan"> ({pluginAvailableInfo.length} disp)</Text>}
                     </Text>
                 </Box>
 
@@ -114,7 +195,17 @@ export const PluginsModal = ({
                                         (p) => p.pluginId.toLowerCase() === (selectedPlugin ?? '').toLowerCase(),
                                     ),
                                 )}
-                                onHighlight={(item) => onSelectPlugin(item.value as string)}
+                                onHighlight={(item) => {
+                                    if (item.value === '__divider__') return;
+                                    const pluginId = item.value as string;
+                                    const isInstalled = plugins.some(p => p.pluginId === pluginId);
+                                    logger.debug('TUI: Plugin highlighted', { pluginId, isInstalled });
+                                }}
+                                onSelect={(item) => {
+                                    if (item.value === '__divider__') return;
+                                    const pluginId = item.value as string;
+                                    onSelectPlugin(pluginId);
+                                }}
                             />
                         ) : (
                             <Text color="gray">No hay plugins instalados.</Text>
@@ -124,11 +215,7 @@ export const PluginsModal = ({
                     <Box marginTop={1} flexDirection="column">
                         {isInstallMode ? (
                             <Text color="yellow">Ruta .scrapper: {draftPath || ' '}</Text>
-                        ) : (
-                            <Text color="gray" dimColor>
-                                ↑/↓ navegar | A agregar | E eliminar
-                            </Text>
-                        )}
+                        ) : null}
                     </Box>
                 </Box>
 
@@ -138,9 +225,12 @@ export const PluginsModal = ({
                             { keyLabel: 'Enter', description: 'Instalar' },
                             { keyLabel: 'Esc', description: 'Cancelar' },
                         ] : [
+                            { keyLabel: 'Enter', description: 'Seleccionar' },
                             { keyLabel: 'Esc', description: 'Salir' },
-                            { keyLabel: 'A', description: 'Agregar' },
+                            { keyLabel: 'A', description: 'Agregar local' },
+                            { keyLabel: 'D', description: 'Descargar' },
                             { keyLabel: 'E', description: 'Eliminar' },
+                            { keyLabel: 'S', description: 'Sync actualizados' },
                         ]}
                     />
                 </Box>
@@ -154,7 +244,7 @@ export const PluginsModal = ({
                         <Text color={isInstallMode ? 'yellow' : 'gray'} italic>
                             {isInstallMode
                                 ? 'Escribe la ruta del plugin y presiona Enter.'
-                                : 'A abre diálogo de instalación.'}
+                                : '↑/↓ navegar | Enter seleccionar | D descargar | S sync'}
                         </Text>
                     )}
                 </Box>
