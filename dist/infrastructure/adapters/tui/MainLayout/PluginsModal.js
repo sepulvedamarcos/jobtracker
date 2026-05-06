@@ -23,16 +23,22 @@ export const PluginsModal = ({ plugins, selectedPlugin, isActive, isInstallMode,
                 versionLabel = `v${compare.localVersion}`;
             }
         }
+        const isSelected = selectedPlugin === plugin.pluginId;
+        const selectIcon = isSelected ? '▸ ' : '  ';
         return {
-            label: `${statusIcon} ${plugin.name} (${versionLabel})`,
+            label: `${selectIcon}${statusIcon} ${plugin.name} (${versionLabel})`,
             value: plugin.pluginId,
         };
     });
     // Plugins disponibles en repo (no instalados)
-    const availableItems = pluginAvailableInfo.map((plugin) => ({
-        label: `✨ ${plugin.name} v${plugin.remoteVersion}`,
-        value: plugin.pluginId,
-    }));
+    const availableItems = pluginAvailableInfo.map((plugin) => {
+        const isSelected = selectedPlugin === plugin.pluginId;
+        const selectIcon = isSelected ? '▸ ' : '  ';
+        return {
+            label: `${selectIcon}✨ ${plugin.name} v${plugin.remoteVersion}`,
+            value: plugin.pluginId,
+        };
+    });
     // Combinar ambos con separador
     const items = [
         ...installedItems,
@@ -40,7 +46,7 @@ export const PluginsModal = ({ plugins, selectedPlugin, isActive, isInstallMode,
         ...availableItems,
     ];
     const outdatedCount = pluginCompareInfo.filter(p => p.status === 'installed-outdated').length;
-    return (_jsx(Box, { position: "absolute", top: 0, left: 0, width: "100%", height: "100%", justifyContent: "center", alignItems: "center", backgroundColor: "black", children: _jsxs(Box, { ...getPanelFrameProps({ isActive, accentColor: 'cyan' }), flexDirection: "column", width: width, height: height, backgroundColor: "black", paddingX: 1, paddingY: 0, children: [_jsxs(Box, { justifyContent: "space-between", children: [_jsx(Text, { underline: true, color: isActive ? 'cyan' : 'white', children: "Plugins" }), _jsxs(Text, { color: "gray", children: [plugins.length, " instalados", outdatedCount > 0 && _jsxs(Text, { color: "yellow", children: [" (", outdatedCount, " desactualizados)"] }), pluginAvailableInfo.length > 0 && _jsxs(Text, { color: "cyan", children: [" (", pluginAvailableInfo.length, " disponibles)"] }), selectedPlugin ? ` | Sel: ${selectedPlugin}` : ''] })] }), _jsxs(Box, { flexDirection: "column", flexGrow: 1, children: [_jsx(Box, { flexGrow: 1, children: isInstallMode ? (_jsx(Box, { justifyContent: "center", alignItems: "center", flexGrow: 1, children: _jsxs(Box, { flexDirection: "column", children: [_jsx(Text, { color: "cyan", bold: true, children: "Ruta del plugin:" }), _jsx(Box, { marginTop: 1, children: _jsx(Box, { borderStyle: "round", borderColor: "cyan", paddingX: 1, children: _jsx(Text, { color: "white", children: draftPath || _jsx(Text, { color: "gray", children: ".scrapper/mi-plugin" }) }) }) }), _jsx(Box, { marginTop: 1, children: _jsx(Text, { color: "gray", dimColor: true, children: "Escribe la ruta y presiona Enter" }) })] }) })) : items.length > 0 ? (_jsx(SelectInput, { items: items, isFocused: isActive, limit: listLimit, initialIndex: Math.max(0, plugins.findIndex((p) => p.pluginId.toLowerCase() === (selectedPlugin ?? '').toLowerCase())), onHighlight: (item) => {
+    return (_jsx(Box, { position: "absolute", top: 0, left: 0, width: "100%", height: "100%", justifyContent: "center", alignItems: "center", backgroundColor: "black", children: _jsxs(Box, { ...getPanelFrameProps({ isActive, accentColor: 'cyan' }), flexDirection: "column", width: width, height: height, backgroundColor: "black", paddingX: 1, paddingY: 0, children: [_jsxs(Box, { justifyContent: "space-between", children: [_jsx(Text, { underline: true, color: isActive ? 'cyan' : 'white', children: "Plugins \u25B8 = seleccionado" }), _jsxs(Text, { color: "gray", children: [plugins.length, " inst", outdatedCount > 0 && _jsxs(Text, { color: "yellow", children: [" (", outdatedCount, " acts)"] }), pluginAvailableInfo.length > 0 && _jsxs(Text, { color: "cyan", children: [" (", pluginAvailableInfo.length, " disp)"] })] })] }), _jsxs(Box, { flexDirection: "column", flexGrow: 1, children: [_jsx(Box, { flexGrow: 1, children: isInstallMode ? (_jsx(Box, { justifyContent: "center", alignItems: "center", flexGrow: 1, children: _jsxs(Box, { flexDirection: "column", children: [_jsx(Text, { color: "cyan", bold: true, children: "Ruta del plugin:" }), _jsx(Box, { marginTop: 1, children: _jsx(Box, { borderStyle: "round", borderColor: "cyan", paddingX: 1, children: _jsx(Text, { color: "white", children: draftPath || _jsx(Text, { color: "gray", children: ".scrapper/mi-plugin" }) }) }) }), _jsx(Box, { marginTop: 1, children: _jsx(Text, { color: "gray", dimColor: true, children: "Escribe la ruta y presiona Enter" }) })] }) })) : items.length > 0 ? (_jsx(SelectInput, { items: items, isFocused: isActive, limit: listLimit, initialIndex: Math.max(0, plugins.findIndex((p) => p.pluginId.toLowerCase() === (selectedPlugin ?? '').toLowerCase())), onHighlight: (item) => {
                                     if (item.value === '__divider__')
                                         return;
                                     const pluginId = item.value;
