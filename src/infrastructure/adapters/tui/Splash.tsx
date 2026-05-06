@@ -26,7 +26,11 @@ export const Splash = ({ onFinish, onUpdateCheck }: Props) => {
   const [checks, setChecks] = useState<CheckResult[]>([]);
   const [blocked, setBlocked] = useState(false);
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
-  
+
+  useEffect(() => {
+    console.clear();
+  }, []);
+
   useEffect(() => {
     checkForUpdate().then(info => {
       setUpdateInfo(info);
