@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.4.7](https://github.com/sepulvedamarcos/jobtracker/compare/v0.4.6...v0.4.7) (2026-05-06)
+
+
+### Features
+
+* clear terminal on splash start ([c2da37d](https://github.com/sepulvedamarcos/jobtracker/commit/c2da37d9cb271d48f3f6951782cedfbeb6bd7d53))
+
 ### [0.4.6](https://github.com/sepulvedamarcos/jobtracker/compare/v0.4.5...v0.4.6) (2026-05-06)
 
 
