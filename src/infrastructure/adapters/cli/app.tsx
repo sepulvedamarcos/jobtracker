@@ -6,6 +6,7 @@ import { render } from 'ink';
 import { Splash } from '../tui/Splash.js';
 import { MainLayout } from '../tui/MainLayout.js';
 import { getVersion } from '../../../services/version.js';
+import type { UpdateInfo } from '../../../services/update-checker.js';
 import { JsonJobRepository } from '../../storage/JsonJobRepository.js';
 import { JobService } from '../../../core/use-cases/JobService.js';
 import { ApplicationService } from '../../../core/use-cases/ApplicationService.js';
@@ -29,6 +30,7 @@ const applicationService = new ApplicationService(jobRepository);
 // --- El Orquestador ---
 const Root = ({ autoScan, skipSplash }: { autoScan?: boolean; skipSplash?: boolean }) => {
   const [loading, setLoading] = useState(!(skipSplash || autoScan));
+  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
 
   useEffect(() => {
     if (skipSplash) {
@@ -37,11 +39,10 @@ const Root = ({ autoScan, skipSplash }: { autoScan?: boolean; skipSplash?: boole
   }, [skipSplash]);
 
   if (loading) {
-    return <Splash onFinish={() => setLoading(false)} />;
+    return <Splash onFinish={() => setLoading(false)} onUpdateCheck={setUpdateInfo} />;
   }
 
-  // Pasamos el autoScan al MainLayout para que sepa si empezar a trabajar
-  return <MainLayout autoScan={autoScan} jobService={jobService} applicationService={applicationService} />;
+  return <MainLayout autoScan={autoScan} jobService={jobService} applicationService={applicationService} updateInfo={updateInfo} />;
 };
 
 // --- Configuración de Commander ---

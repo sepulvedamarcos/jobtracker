@@ -3,11 +3,12 @@ import { Box, Text } from 'ink';
 import BigText from 'ink-big-text';
 import Gradient from 'ink-gradient';
 import { getPluginsDir } from '../../plugins/PluginPathResolver.js';
+import { checkForUpdate, type UpdateInfo } from '../../../services/update-checker.js';
 import fs from 'fs';
-import path from 'path';
 
 interface Props {
   onFinish: () => void;
+  onUpdateCheck?: (info: UpdateInfo | null) => void;
 }
 
 interface CheckResult {
@@ -21,12 +22,19 @@ const hasBlockingErrors = (checks: CheckResult[]) => {
   return checks.some(c => c.status === 'error');
 };
 
-export const Splash = ({ onFinish }: Props) => {
+export const Splash = ({ onFinish, onUpdateCheck }: Props) => {
   const [checks, setChecks] = useState<CheckResult[]>([]);
   const [blocked, setBlocked] = useState(false);
+  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
   
   useEffect(() => {
-    // Checks síncronos
+    checkForUpdate().then(info => {
+      setUpdateInfo(info);
+      onUpdateCheck?.(info);
+    });
+  }, [onUpdateCheck]);
+
+  useEffect(() => {
     const results: CheckResult[] = [];
     
     // 1. Verificar directorio de plugins
@@ -131,6 +139,11 @@ export const Splash = ({ onFinish }: Props) => {
       </Gradient>
       
 <Text italic color="cyan">Validando entorno...</Text>
+
+        <Text color="gray">
+          {updateInfo === null ? '◐ Buscando actualizaciones...' : 
+           updateInfo.hasUpdate ? '✓ Actualización disponible' : '✓ Versión al día'}
+        </Text>
        
        {blocked && (
          <Box marginTop={2}>

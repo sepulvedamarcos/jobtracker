@@ -2,14 +2,16 @@ import React from 'react';
 import { Box, Text } from 'ink';
 import Gradient from 'ink-gradient';
 import { getVersion } from '../../../../services/version.js';
+import type { UpdateInfo } from '../../../../services/update-checker.js';
 
 interface HeaderProps {
   pluginsCount: number;
   keywordsCount: number;
   status: string;
+  updateInfo?: UpdateInfo | null;
 }
 
-export const Header = ({ pluginsCount, keywordsCount, status }: HeaderProps) => {
+export const Header = ({ pluginsCount, keywordsCount, status, updateInfo }: HeaderProps) => {
   return (
     <Box 
       borderStyle="single" 
@@ -22,6 +24,9 @@ export const Header = ({ pluginsCount, keywordsCount, status }: HeaderProps) => 
           <Text bold>JOB TRACKER</Text>
         </Gradient>
         <Text color="gray"> v{getVersion()}</Text>
+        {updateInfo?.hasUpdate && (
+          <Text color="yellow"> → v{updateInfo.latest}</Text>
+        )}
       </Box>
 
       <Box>

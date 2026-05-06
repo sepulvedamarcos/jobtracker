@@ -43,14 +43,16 @@ import { getDevPlugins } from '../../plugins/PluginRegistry.js';
 import { logger } from '../../logger/Logger.js';
 import { getPluginsDir } from '../../plugins/PluginPathResolver.js';
 import type { PluginMetadata } from '../../../core/plugins/PluginMetadata.js';
+import type { UpdateInfo } from '../../../services/update-checker.js';
 
 interface MainLayoutProps {
     autoScan?: boolean;
     jobService: JobService;
     applicationService: ApplicationService;
+    updateInfo?: UpdateInfo | null;
 }
 
-export const MainLayout = ({ autoScan, jobService, applicationService }: MainLayoutProps) => {
+export const MainLayout = ({ autoScan, jobService, applicationService, updateInfo }: MainLayoutProps) => {
     const [jobsData, setJobsData] = useState<ViewJob[]>([]);
     const [applicationsData, setApplicationsData] = useState<ViewApplication[]>([]);
     const [selectedJob, setSelectedJob] = useState<ViewJob | null>(null);
@@ -1079,6 +1081,7 @@ if (isPluginsModalOpen) {
                 pluginsCount={pluginsList.length}
                 keywordsCount={keywords.length}
                 status={isAutoScanRunning ? 'Escaneo automático en curso...' : status}
+                updateInfo={updateInfo}
             />
 
             <Box flexDirection="row" flexGrow={1}>
