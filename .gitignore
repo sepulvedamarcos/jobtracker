@@ -486,3 +486,7 @@ $RECYCLE.BIN/
 
 *.scrapper
 dist-plugins
+
+# Plugin compiled files (generated from TypeScript)
+src/infrastructure/plugins/*/scraper.js
+src/infrastructure/plugins/*/metadata.json
