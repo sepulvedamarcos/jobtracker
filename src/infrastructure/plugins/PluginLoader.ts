@@ -31,8 +31,11 @@ export const loadScraperPlugin = async (pluginId: string): Promise<PluginScraper
   }
 
   // Crear shim de playwright en el directorio del plugin si no existe
-  const playwrightShimPath = path.join(pluginDir, 'playwright.js');
-  if (!fs.existsSync(playwrightShimPath) && !isDevMode) {
+  // Solución: crear node_modules dentro del plugin con enlace simbólico a playwright
+  const pluginNodeModules = path.join(pluginDir, 'node_modules');
+  const pluginPlaywright = path.join(pluginNodeModules, 'playwright');
+  
+  if (!fs.existsSync(pluginPlaywright) && !isDevMode) {
     // Buscar playwright desde la ubicación del ejecutable
     const exeDir = path.dirname(process.execPath);
     
@@ -54,15 +57,16 @@ export const loadScraperPlugin = async (pluginId: string): Promise<PluginScraper
     logger.debug('PluginLoader: searching playwright', { searchPaths, found: !!playwrightPath });
     
     if (playwrightPath) {
-      // Crear shim con require relativo
-      const shimContent = `// Auto-generated shim - do not edit
-const path = require('path');
-const basePath = path.dirname(require.main.filename);
-const resolved = path.join(basePath, 'node_modules/playwright');
-module.exports = require(resolved);
-`;
-      fs.writeFileSync(playwrightShimPath, shimContent);
-      logger.info('PluginLoader: created playwright shim', { pluginId, playwrightPath });
+      // Crear estructura de node_modules en el plugin
+      fs.mkdirSync(pluginNodeModules, { recursive: true });
+      
+      // Crear enlace simbólico al módulo de playwright
+      try {
+        fs.symlinkSync(playwrightPath, pluginPlaywright, 'dir');
+        logger.info('PluginLoader: created playwright symlink', { pluginId, playwrightPath });
+      } catch (e) {
+        logger.error('PluginLoader: failed to create symlink', { error: e });
+      }
     }
   }
 

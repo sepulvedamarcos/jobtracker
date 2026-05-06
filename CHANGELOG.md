@@ -2,7 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
-### [0.3.30](https://github.com/sepulvedamarcos/jobtracker/compare/v0.3.29...v0.3.30) (2026-05-06)
+### [0.4.1](https://github.com/sepulvedamarcos/jobtracker/compare/v0.4.0...v0.4.1) (2026-05-06)
+
+
+### Bug Fixes
+
+* **plugins**: create symlink to playwright in plugin directory for production execution
+
+
+### [0.4.0](https://github.com/sepulvedamarcos/jobtracker/compare/v0.3.29...v0.4.0) (2026-05-06)
 
 
 ### Features
@@ -20,6 +28,38 @@ All notable changes to this project will be documented in this file. See [standa
 * **cli**: fix delete-plugin option parsing (add fallback for kebab-case)
 * **tui**: fix plugin selection being reset when navigating available plugins
 * **install**: move playwright to dependencies (was in devDependencies)
+
+### [0.3.29](https://github.com/sepulvedamarcos/jobtracker/compare/v0.3.28...v0.3.29) (2026-05-06)
+
+
+### Bug Fixes
+
+* **cli**: fix --download-plugin option parsing
+
+
+### [0.3.28](https://github.com/sepulvedamarcos/jobtracker/compare/v0.3.27...v0.3.28) (2026-05-06)
+
+
+### Bug Fixes
+
+* **logger**: add logging system for debugging TUI issues
+
+
+### [0.3.27](https://github.com/sepulvedamarcos/jobtracker/compare/v0.3.26...v0.3.27) (2026-05-06)
+
+
+### Features
+
+* **cli**: rename --delPlugin to --delete-plugin
+
+
+### [0.3.26](https://github.com/sepulvedamarcos/jobtracker/compare/v0.3.25...v0.3.26) (2026-05-06)
+
+
+### Bug Fixes
+
+* **cli**: fix --download-plugin option parsing
+
 
 ### [0.3.6](https://github.com/sepulvedamarcos/jobtracker/compare/v0.3.5...v0.3.6) (2026-05-05)
 
