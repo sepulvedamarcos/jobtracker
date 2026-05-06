@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.4.2](https://github.com/sepulvedamarcos/jobtracker/compare/v0.4.1...v0.4.2) (2026-05-06)
+
+
+### Bug Fixes
+
+* resolve version path for CLI in production ([8e048f6](https://github.com/sepulvedamarcos/jobtracker/commit/8e048f6f66a5cad852ab552c62020afc84d27912))
+
 ### [0.4.1](https://github.com/sepulvedamarcos/jobtracker/compare/v0.4.0...v0.4.1) (2026-05-06)
 
 
