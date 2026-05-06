@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.4.4](https://github.com/sepulvedamarcos/jobtracker/compare/v0.4.3...v0.4.4) (2026-05-06)
+
+
+### Features
+
+* add non-blocking version check for updates ([1943a46](https://github.com/sepulvedamarcos/jobtracker/commit/1943a46545ab16ef79c43578b12f485ddee27823))
+
 ### [0.4.3](https://github.com/sepulvedamarcos/jobtracker/compare/v0.4.2...v0.4.3) (2026-05-06)
 
 ### [0.4.2](https://github.com/sepulvedamarcos/jobtracker/compare/v0.4.1...v0.4.2) (2026-05-06)
